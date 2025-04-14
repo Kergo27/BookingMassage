@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="textView" type="id" />
+    <item name="passwordEditText" type="id" />
+    <item name="registerButton" type="id" />
+    <item name="main" type="id" />
+    <item name="usernameEditText" type="id" />
+    <item name="headerimage" type="id" />
+    <item name="userEmailEditText" type="id" />
+    <item name="passwordAgainEditText" type="id" />
+</resources>

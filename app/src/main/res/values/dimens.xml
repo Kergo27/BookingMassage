@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="title_text_size" />
+    <dimen name="basic_margin" />
+    <dimen name="login_field_margin" />
+    <dimen name="normal_text_size" />
+    <dimen name="login_button_margin" />
+    <dimen name="small_text_size" />
+</resources>

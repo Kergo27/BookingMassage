@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BookingMassage</string>
+    <string name="username_text" />
+    <string name="password_text" />
+    <string name="login_text" />
+    <string name="not_registered" />
+    <string name="register_text" />
+</resources>
