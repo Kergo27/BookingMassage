@@ -1,4 +1,5 @@
 |===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|
+
 Kedves Javító.
 
 A programom nincsen kész, kicsit előrébb haladott, mint az első mérföldkő-
@@ -17,4 +18,5 @@ Ami van a programomban:
 Bármi kérdésed van, vagy esetleg gyorsabban akarsz haladni a javítással, írj 
 Discordon: zsami1127
 Facebookon: Kocsis Gergő
+
   |===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|===|=|===|
