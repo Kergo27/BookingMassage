@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/background_gradient"
+    tools:context=".EditAppointmentActivity">
+
+    <ImageButton
+        android:id="@+id/btnBackEditAppointment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Vissza"
+        android:src="?attr/homeAsUpIndicator"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/white"
+        tools:ignore="TouchTargetSizeCheck" />
+
+    <TextView
+        android:id="@+id/tvEditAppointmentTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Foglalás Módosítása"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:textAlignment="center"
+        app:layout_constraintTop_toTopOf="@+id/btnBackEditAppointment"
+        app:layout_constraintBottom_toBottomOf="@+id/btnBackEditAppointment"
+        app:layout_constraintStart_toEndOf="@+id/btnBackEditAppointment"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/tvCurrentAppointmentDetails"
+        android:layout_width="0dp"
+     android:layout_height="wrap_content"
+    android:layout_marginTop="24dp"
+    android:textColor="@color/white"
+    android:textSize="16sp"
+    app:layout_constraintTop_toBottomOf="@+id/tvEditAppointmentTitle"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    tools:text="Időpont: 2025. máj. 20. 10:00\nJelenlegi típus: Svéd masszázs" />
+
+    <TextView
+        android:id="@+id/labelNewMassageType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Új masszázs típus:"
+        android:textColor="@color/white"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvCurrentAppointmentDetails"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <Spinner
+        android:id="@+id/spinnerNewMassageType"
+        style="@style/Widget.AppCompat.Spinner.DropDown"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/edittext_background_white_rounded"
+        android:minHeight="48dp"
+        android:popupBackground="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/labelNewMassageType" />
+
+    <Button
+        android:id="@+id/btnSaveChanges"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Változtatások Mentése"
+        android:backgroundTint="@color/primaryColor"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/spinnerNewMassageType"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <ProgressBar
+        android:id="@+id/progressBarEdit"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

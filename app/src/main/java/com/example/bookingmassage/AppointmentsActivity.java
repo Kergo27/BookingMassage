@@ -15,10 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.bookingmassage.AppointmentAdapter;
-import com.example.bookingmassage.Appointment;
-import com.example.bookingmassage.FirebaseHelper;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -192,7 +188,7 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
         intent.putExtra("APPOINTMENT_ID", appointment.getAppointmentId());
         intent.putExtra("USER_ID", appointment.getUserId());
         intent.putExtra("TIME_SLOT_ID", appointment.getTimeSlotId());
-        intent.putExtra("CURRENT_MASSAGE_TYPE", appointment.getServiceType());
+        intent.putExtra("CURRENT_MASSAGE_TYPE", appointment.getMassageType());
         intent.putExtra("DATE", appointment.getDate());
         intent.putExtra("TIME", appointment.getTime());
         startActivityForResult(intent, EDIT_APPOINTMENT_REQUEST_CODE);
@@ -206,7 +202,7 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
                 .setMessage("Biztosan törölni szeretnéd ezt a foglalást?\n" +
                         (appointment.getDate() != null ? appointment.getDate() : "") + " " +
                         (appointment.getTime() != null ? appointment.getTime() : "") + "\n" +
-                        (appointment.getServiceType() != null ? appointment.getServiceType() : ""))
+                        (appointment.getMassageType() != null ? appointment.getMassageType() : ""))
                 .setPositiveButton("Törlés", (dialog, which) -> {
                     progressBarAppointments.setVisibility(View.VISIBLE);
                     firebaseHelper.cancelUserAppointment(

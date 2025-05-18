@@ -41,7 +41,7 @@ public class EditAppointmentActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_appointments);
+        setContentView(R.layout.activity_edit_appointment);
         Log.d(TAG, "onCreate");
 
         firebaseHelper = new FirebaseHelper();

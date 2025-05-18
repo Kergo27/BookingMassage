@@ -5,17 +5,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
+import android.widget.Button; // Fontos: Button importálása
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.bookingmassage.R;
-import com.example.bookingmassage.Appointment; // Győződj meg róla, hogy a csomagnév helyes
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList; // Hozzáadva az ArrayList importja
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -23,23 +20,19 @@ import java.util.Locale;
 public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.AppointmentViewHolder> {
 
     private static final String TAG = "AppointmentAdapter";
-    private List<Appointment> appointmentList; // Az adapter belső listája
+    private List<Appointment> appointmentList;
     private OnAppointmentActionListener listener;
-    private Context context; // Szükséges lehet a formázáshoz vagy erőforrásokhoz
+    private Context context;
     private SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    // Magyar formátum a nap nevével
     private SimpleDateFormat displayDateFormat = new SimpleDateFormat("yyyy. MMMM dd. (EEEE)", new Locale("hu", "HU"));
 
 
-    // Interface a törlés és szerkesztés gombok eseményeinek kezelésére az Activity-ben
     public interface OnAppointmentActionListener {
         void onEditClicked(Appointment appointment);
         void onDeleteClicked(Appointment appointment);
     }
 
     public AppointmentAdapter(List<Appointment> initialAppointmentList, OnAppointmentActionListener listener, Context context) {
-        // Fontos: Hozzunk létre egy ÚJ listát az adapteren belül, hogy ne az Activity-ben lévő
-        // ugyanazt a referenciát használjuk, ami problémákat okozhat a clear()/addAll() során.
         this.appointmentList = new ArrayList<>(initialAppointmentList != null ? initialAppointmentList : new ArrayList<>());
         this.listener = listener;
         this.context = context;
@@ -48,7 +41,6 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
     @NonNull
     @Override
     public AppointmentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // A context-et itt is beállíthatjuk, ha a konstruktorban nem tettük meg, vagy frissíteni akarjuk
         if (this.context == null) {
             this.context = parent.getContext();
         }
@@ -61,48 +53,63 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
         Appointment currentAppointment = appointmentList.get(position);
 
         if (currentAppointment == null) {
-            Log.e(TAG, "Appointment objektum null a " + position + ". pozíción. ViewHolder ürítése.");
+            Log.e(TAG, "Appointment objektum null a " + position + ". pozíción.");
             holder.tvAppointmentDate.setText("N/A");
             holder.tvAppointmentTime.setText("N/A");
-            holder.tvAppointmentMassageType.setText("N/A");
+            holder.tvAppointmentMassageType.setText("N/A"); // Alapértelmezett érték
             holder.btnEditAppointment.setVisibility(View.GONE);
             holder.btnDeleteAppointment.setVisibility(View.GONE);
             return;
         }
 
-        // Dátum formázása
-        String formattedDate = currentAppointment.getDate(); // Alapértelmezett érték
+
+        String formattedDate = currentAppointment.getDate();
         if (currentAppointment.getDate() != null) {
             try {
                 Calendar cal = Calendar.getInstance();
-                // A Firebase-ben tárolt "yyyy-MM-dd" formátumú dátumot parse-oljuk
                 cal.setTime(inputDateFormat.parse(currentAppointment.getDate()));
-                // Majd a kívánt "yyyy. MMMM dd. (EEEE)" formátumra alakítjuk magyarul
                 formattedDate = displayDateFormat.format(cal.getTime());
             } catch (ParseException e) {
                 Log.e(TAG, "Hiba a dátum (" + currentAppointment.getDate() + ") formázásakor: ", e);
-                // Ha hiba van, az eredeti (vagy egy hibaüzenet) marad
             }
         }
 
         holder.tvAppointmentDate.setText(formattedDate != null ? formattedDate : "N/A");
         holder.tvAppointmentTime.setText(currentAppointment.getTime() != null ? currentAppointment.getTime() : "N/A");
 
-        String serviceType = currentAppointment.getServiceType();
-        if (serviceType != null && !serviceType.equalsIgnoreCase("null")) { // Ellenőrizzük a "null" stringet is
+        String serviceType = currentAppointment.getMassageType();
+        if (serviceType != null && !serviceType.trim().isEmpty() && !serviceType.equalsIgnoreCase("null")) {
+            // Ha a serviceType nem null, nem csak whitespace-ekből áll, ÉS nem a "null" string (kis-nagybetű érzéketlenül)
             holder.tvAppointmentMassageType.setText(serviceType);
         } else {
-            holder.tvAppointmentMassageType.setText("Nincs megadva"); // Vagy valami más placeholder
-            Log.w(TAG, "ServiceType null vagy 'null' string a következő foglaláshoz: " + currentAppointment.getAppointmentId());
+            // Ha null, üres, vagy a "null" string, akkor egy placeholder szöveget jelenítünk meg
+            holder.tvAppointmentMassageType.setText("Nincs megadva"); // Vagy pl. "-", "Ismeretlen"
+            Log.w(TAG, "ServiceType null, üres, vagy 'null' string a következő foglaláshoz: " +
+                    (currentAppointment.getAppointmentId() != null ? currentAppointment.getAppointmentId() : "ID_HIÁNYZIK") +
+                    ", Érték: '" + serviceType + "'");
         }
 
-
+        // Listener beállítása a gombokhoz
         if (listener != null) {
+            // Biztosítjuk, hogy a gombok láthatóak legyenek, ha van listener
             holder.btnEditAppointment.setVisibility(View.VISIBLE);
             holder.btnDeleteAppointment.setVisibility(View.VISIBLE);
-            holder.btnEditAppointment.setOnClickListener(v -> listener.onEditClicked(currentAppointment));
-            holder.btnDeleteAppointment.setOnClickListener(v -> listener.onDeleteClicked(currentAppointment));
+
+            holder.btnEditAppointment.setOnClickListener(v -> {
+                Log.d(TAG, "Módosít gomb lenyomva, pozíció: " + holder.getAdapterPosition());
+                if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) { // Ellenőrzés, hogy a pozíció érvényes-e
+                    listener.onEditClicked(appointmentList.get(holder.getAdapterPosition()));
+                }
+            });
+            holder.btnDeleteAppointment.setOnClickListener(v -> {
+                Log.d(TAG, "Töröl gomb lenyomva, pozíció: " + holder.getAdapterPosition());
+                if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    listener.onDeleteClicked(appointmentList.get(holder.getAdapterPosition()));
+                }
+            });
         } else {
+            // Ha nincs listener, elrejtjük a gombokat, hogy ne okozzanak hibát
+            Log.w(TAG, "Nincs OnAppointmentActionListener beállítva, a gombok elrejtve.");
             holder.btnEditAppointment.setVisibility(View.GONE);
             holder.btnDeleteAppointment.setVisibility(View.GONE);
         }
@@ -113,37 +120,33 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
         return appointmentList != null ? appointmentList.size() : 0;
     }
 
-    /**
-     * Frissíti az adapterben lévő adatokat az új listával.
-     * @param newAppointments Az új foglalások listája.
-     */
     public void updateAppointments(List<Appointment> newAppointments) {
-        this.appointmentList.clear(); // Először töröljük az adapter belső listáját
+        this.appointmentList.clear();
         if (newAppointments != null) {
-            this.appointmentList.addAll(newAppointments); // Majd hozzáadjuk az új elemeket
-            Log.d(TAG, "updateAppointments: " + newAppointments.size() + " új elem hozzáadva az adapter listájához.");
-        } else {
-            Log.d(TAG, "updateAppointments: newAppointments lista null volt, az adapter listája üres maradt.");
+            this.appointmentList.addAll(newAppointments);
         }
-        notifyDataSetChanged(); // Értesítjük az adaptert a változásról
-        Log.d(TAG, "Adapter adatai frissítve, új elemszám (getItemCount): " + getItemCount());
+        notifyDataSetChanged();
+        Log.d(TAG, "Adapter adatai frissítve, új elemszám: " + getItemCount());
     }
 
-
+    // ViewHolder Osztály - Fontos, hogy Button típust használjon
     static class AppointmentViewHolder extends RecyclerView.ViewHolder {
         TextView tvAppointmentDate, tvAppointmentTime, tvAppointmentMassageType;
-        ImageButton btnEditAppointment, btnDeleteAppointment;
+        Button btnEditAppointment, btnDeleteAppointment; // ITT BUTTON-NAK KELL LENNIE
 
         public AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
             tvAppointmentDate = itemView.findViewById(R.id.tvAppointmentDate);
             tvAppointmentTime = itemView.findViewById(R.id.tvAppointmentTime);
             tvAppointmentMassageType = itemView.findViewById(R.id.tvAppointmentMassageType);
-            btnEditAppointment = itemView.findViewById(R.id.btnEditAppointment);
-            btnDeleteAppointment = itemView.findViewById(R.id.btnDeleteAppointment);
+            btnEditAppointment = itemView.findViewById(R.id.btnEditAppointment); // XML ID alapján
+            btnDeleteAppointment = itemView.findViewById(R.id.btnDeleteAppointment); // XML ID alapján
 
-            if (tvAppointmentDate == null || tvAppointmentTime == null || tvAppointmentMassageType == null || btnEditAppointment == null || btnDeleteAppointment == null) {
-                Log.e(TAG, "ViewHolder: Egy vagy több UI elem null. Ellenőrizd az item_user_appointment.xml ID-kat!");
+            if (btnEditAppointment == null) {
+                Log.e(TAG, "ViewHolder: btnEditAppointment (Button) nem található az item_user_appointment.xml-ben! Ellenőrizd az ID-t.");
+            }
+            if (btnDeleteAppointment == null) {
+                Log.e(TAG, "ViewHolder: btnDeleteAppointment (Button) nem található az item_user_appointment.xml-ben! Ellenőrizd az ID-t.");
             }
         }
     }

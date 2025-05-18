@@ -177,8 +177,8 @@ public class FirebaseHelper {
      * Lefoglal egy időpontot.
      * Atomikus műveletként frissíti a time_slots-ot és létrehoz egy user_appointment bejegyzést.
      */
-    public void bookSlot(String timeSlotId, String userId, String massageType, String date, String time, final OnBookingCompleteListener listener) {
-        Log.d(TAG, "bookSlot hívva. TimeSlotId: " + timeSlotId + ", UserId: " + userId + ", MassageType: " + massageType);
+    public void bookSlot(String timeSlotId, String userId, String massageTypeFromParam, String date, String time, final OnBookingCompleteListener listener) {
+        Log.d(TAG, "bookSlot hívva. TimeSlotId: " + timeSlotId + ", UserId: " + userId + ", MassageTypeParam: " + massageTypeFromParam + ", Date: " + date + ", Time: " + time);
 
         DatabaseReference slotRef = timeSlotsRef.child(timeSlotId);
 
@@ -187,7 +187,6 @@ public class FirebaseHelper {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 TimeSlot currentSlot = snapshot.getValue(TimeSlot.class);
                 if (currentSlot != null && currentSlot.isAvailable()) {
-                    // Időpont elérhető, próbáljuk lefoglalni
                     String appointmentPushKey = userAppointmentsRef.child(userId).push().getKey();
                     if (appointmentPushKey == null) {
                         Log.e(TAG, "Nem sikerült kulcsot generálni a user_appointments-hez.");
@@ -195,16 +194,22 @@ public class FirebaseHelper {
                         return;
                     }
 
-                    Appointment newAppointment = new Appointment(userId, timeSlotId, date, time, massageType);
-                    newAppointment.setAppointmentId(appointmentPushKey); // Beállítjuk a generált kulcsot
+                    // Appointment objektum létrehozása
+                    Appointment newAppointment = new Appointment(userId, timeSlotId, date, time, massageTypeFromParam);
+                    newAppointment.setAppointmentId(appointmentPushKey);
+
+                    // LOGOLJUK A LÉTREHOZOTT Appointment OBJEKTUMOT ÉS ANNAK MASSZÁZS TÍPUSÁT
+                    Log.d(TAG, "Létrehozott newAppointment objektum: " + newAppointment.toString());
+                    Log.d(TAG, "newAppointment.getMassageType() értéke: " + newAppointment.getMassageType());
 
                     Map<String, Object> childUpdates = new HashMap<>();
-                    // TimeSlot frissítése
                     childUpdates.put("/time_slots/" + timeSlotId + "/available", false);
                     childUpdates.put("/time_slots/" + timeSlotId + "/bookedByUserId", userId);
-                    childUpdates.put("/time_slots/" + timeSlotId + "/bookedMassageType", massageType);
-                    // Új user_appointment bejegyzés
-                    childUpdates.put("/user_appointments/" + userId + "/" + appointmentPushKey, newAppointment);
+                    childUpdates.put("/time_slots/" + timeSlotId + "/bookedMassageType", massageTypeFromParam); // Itt is a paramétert használjuk
+                    childUpdates.put("/user_appointments/" + userId + "/" + appointmentPushKey, newAppointment); // Itt a newAppointment objektumot
+
+                    // LOGOLJUK A childUpdates MAP-OT (a newAppointment részét)
+                    Log.d(TAG, "childUpdates map a Firebase-be írás előtt (user_appointments rész): " + newAppointment.toString()); // Vagy a teljes map, ha kell
 
                     databaseRootRef.updateChildren(childUpdates)
                             .addOnSuccessListener(aVoid -> {

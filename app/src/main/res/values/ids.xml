@@ -34,4 +34,5 @@
     <item name="btnSaveChanges" type="id" />
     <item name="btnBackEditAppointment" type="id" />
     <item name="progressBarEdit" type="id" />
+    <item name="tvEditAppointmentTitle" type="id" />
 </resources>
