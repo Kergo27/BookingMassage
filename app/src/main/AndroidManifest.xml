@@ -25,6 +25,7 @@
         <activity android:name=".HomeActivity" />
         <activity android:name=".BookingActivity" />
         <activity android:name=".AppointmentsActivity" />
+        <activity android:name=".EditAppointmentActivity" />
 
 
         <!-- Itt lehetnek még Service-ek, pl. NotificationService -->

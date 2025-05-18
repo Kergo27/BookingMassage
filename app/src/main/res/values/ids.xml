@@ -29,4 +29,9 @@
     <item name="tvSelectedDate" type="id" />
     <item name="btnPickDate" type="id" />
     <item name="rvTimeSlots" type="id" />
+    <item name="tvCurrentAppointmentDetails" type="id" />
+    <item name="spinnerNewMassageType" type="id" />
+    <item name="btnSaveChanges" type="id" />
+    <item name="btnBackEditAppointment" type="id" />
+    <item name="progressBarEdit" type="id" />
 </resources>
