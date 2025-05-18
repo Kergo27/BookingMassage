@@ -15,12 +15,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+// Győződj meg róla, hogy a saját modelljeid és adaptered importálva vannak a helyes csomagból
+import com.example.bookingmassage.AppointmentAdapter;
+import com.example.bookingmassage.Appointment;
+import com.example.bookingmassage.FirebaseHelper;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
+// Firestore importok
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,11 +39,11 @@ import java.util.List;
 public class AppointmentsActivity extends AppCompatActivity implements AppointmentAdapter.OnAppointmentActionListener {
 
     private static final String TAG = "AppointmentsActivity";
-    public static final int EDIT_APPOINTMENT_REQUEST_CODE = 101;
+    public static final int EDIT_APPOINTMENT_REQUEST_CODE = 101; // Request kód az EditActivity-hez
 
     private RecyclerView rvUserAppointments;
     private AppointmentAdapter appointmentAdapter;
-    private List<Appointment> userAppointmentsList = new ArrayList<>(); // Lista az Activity-ben
+    private List<Appointment> userAppointmentsList = new ArrayList<>();
     private ProgressBar progressBarAppointments;
     private TextView tvNoUserAppointmentsMessage;
     private ImageButton btnBackAppointments;
@@ -42,8 +51,10 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
     private FirebaseHelper firebaseHelper;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
-    private ValueEventListener appointmentsListener;
-    private Query userAppointmentsQuery;
+
+    // Firestore real-time listenerhez
+    private ListenerRegistration appointmentsListenerRegistration;
+    private Query userAppointmentsQuery; // Firestore Query
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,19 +62,21 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
         setContentView(R.layout.activity_appointments);
         Log.d(TAG, "onCreate elindult.");
 
+        // UI Elemek inicializálása
         rvUserAppointments = findViewById(R.id.rvUserAppointments);
         progressBarAppointments = findViewById(R.id.progressBarAppointments);
         tvNoUserAppointmentsMessage = findViewById(R.id.tvNoUserAppointmentsMessage);
         btnBackAppointments = findViewById(R.id.btnBackAppointments);
 
         if (rvUserAppointments == null || progressBarAppointments == null || tvNoUserAppointmentsMessage == null || btnBackAppointments == null) {
-            Log.e(TAG, "Hiba: Egy vagy több UI elem null a findViewById után! Ellenőrizd az XML ID-kat!");
+            Log.e(TAG, "Hiba: Egy vagy több UI elem null a findViewById után az AppointmentsActivity-ben! Ellenőrizd az XML ID-kat.");
             Toast.makeText(this, "Hiba a felület inicializálásakor.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        firebaseHelper = new FirebaseHelper();
+        // Firebase inicializálás
+        firebaseHelper = new FirebaseHelper(); // Ennek most Firestore logikát kell tartalmaznia
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
 
@@ -77,112 +90,115 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
         }
         Log.d(TAG, "Bejelentkezett felhasználó: " + currentUser.getEmail() + ", UID: " + currentUser.getUid());
 
-
+        // Vissza gomb listener
         btnBackAppointments.setOnClickListener(v -> {
-            Log.d(TAG, "Vissza gomb megnyomva.");
+            Log.d(TAG, "Vissza gomb megnyomva az AppointmentsActivity-ből.");
             onBackPressed();
         });
 
         setupRecyclerView();
-        loadUserAppointments();
+        // A foglalások betöltése az onStart()-ban fog történni, hogy a listener megfelelően frissüljön
     }
 
     private void setupRecyclerView() {
         rvUserAppointments.setLayoutManager(new LinearLayoutManager(this));
-        // Az adapternek most az Activity-ben lévő userAppointmentsList referenciáját adjuk át,
-        // de az adapter konstruktora másolatot készít belőle.
+        // Az adapter konstruktorának most már az Activity-t kell kapnia listenerként
         appointmentAdapter = new AppointmentAdapter(userAppointmentsList, this, this);
         rvUserAppointments.setAdapter(appointmentAdapter);
         Log.d(TAG, "RecyclerView és AppointmentAdapter beállítva.");
     }
 
-    private void loadUserAppointments() {
+    private void loadUserAppointmentsRealtime() {
         if (currentUser == null) {
-            Log.e(TAG, "loadUserAppointments: currentUser null, nem tudok lekérdezni.");
+            Log.e(TAG, "loadUserAppointmentsRealtime: currentUser null!");
+            updateUIVisibility(true, "Hiba: Nincs felhasználó az adatok lekéréséhez.");
             return;
         }
         final String userIdForQuery = currentUser.getUid();
-        Log.i(TAG, "loadUserAppointments elindult. UID: " + userIdForQuery);
-        progressBarAppointments.setVisibility(View.VISIBLE);
-        tvNoUserAppointmentsMessage.setVisibility(View.GONE);
-        rvUserAppointments.setVisibility(View.GONE);
+        Log.i(TAG, "Firestore: loadUserAppointmentsRealtime elindult. UID: " + userIdForQuery);
 
-        if (appointmentsListener != null && userAppointmentsQuery != null) {
-            userAppointmentsQuery.removeEventListener(appointmentsListener);
-            Log.d(TAG, "Régi appointmentsListener eltávolítva.");
+        updateUIVisibility(false, null); // Töltés jelzése
+
+        // Eltávolítjuk a régi listenert, ha létezik, mielőtt újat adnánk hozzá
+        if (appointmentsListenerRegistration != null) {
+            appointmentsListenerRegistration.remove();
+            Log.d(TAG, "Régi Firestore listener eltávolítva.");
         }
 
-        userAppointmentsQuery = firebaseHelper.getUserBookedAppointments(userIdForQuery);
-        Log.d(TAG, "Firebase Query objektum lekérve: " + userAppointmentsQuery.getRef().toString());
+        userAppointmentsQuery = firebaseHelper.getUserBookedAppointments(userIdForQuery); // Ez most Firestore Query-t ad vissza
+        if (userAppointmentsQuery == null) {
+            Log.e(TAG, "firebaseHelper.getUserBookedAppointments null Query-t adott vissza!");
+            updateUIVisibility(true, "Hiba a lekérdezés előkészítésekor.");
+            return;
+        }
+        Log.d(TAG, "Firestore Query objektum lekérve.");
 
-        appointmentsListener = new ValueEventListener() {
+
+        appointmentsListenerRegistration = userAppointmentsQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onDataChange hívva. Elérési út: " + dataSnapshot.getRef().toString() + ", Snapshot exists: " + dataSnapshot.exists() + ", Children count: " + dataSnapshot.getChildrenCount());
-                userAppointmentsList.clear(); // Fontos: Az Activity listáját töröljük
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        Log.v(TAG, "Snapshot feldolgozása, kulcs: " + snapshot.getKey());
-                        Appointment appointment = snapshot.getValue(Appointment.class);
-                        if (appointment != null) {
-                            // Ha az appointmentId-t a Firebase kulcsból akarod venni (de a mi Appointment modellünknek van appointmentId mezője)
-                            // if (appointment.getAppointmentId() == null || appointment.getAppointmentId().isEmpty()) {
-                            //    appointment.setAppointmentId(snapshot.getKey());
-                            // }
-                            Log.d(TAG, "Sikeresen deszerializált foglalás: " + appointment.toString());
-                            userAppointmentsList.add(appointment);
-                        } else {
-                            Log.w(TAG, "Nem sikerült deszerializálni az Appointment objektumot a snapshotból: " + snapshot.getKey());
-                        }
-                    }
-                    // Rendezés időrendben (a legfrissebb felül, a bookingTimestamp alapján)
-                    if (!userAppointmentsList.isEmpty() && userAppointmentsList.get(0).getBookingTimestamp() > 0) { // Csak akkor rendezzünk, ha van timestamp
-                        Collections.sort(userAppointmentsList, Comparator.comparingLong(Appointment::getBookingTimestamp).reversed());
-                    } else if (!userAppointmentsList.isEmpty()) {
-                        Log.w(TAG, "BookingTimestamp hiányzik vagy 0, nem lehet rendezni timestamp alapján.");
-                        // Esetleg rendezzük dátum és idő alapján, ha a timestamp hiányzik
-                        Collections.sort(userAppointmentsList, (a1, a2) -> {
-                            String dateTime1 = (a1.getDate() != null ? a1.getDate() : "") + (a1.getTime() != null ? a1.getTime() : "");
-                            String dateTime2 = (a2.getDate() != null ? a2.getDate() : "") + (a2.getTime() != null ? a2.getTime() : "");
-                            return dateTime2.compareTo(dateTime1); // Fordított sorrend (legújabb elöl)
-                        });
-                    }
-                    Log.d(TAG, userAppointmentsList.size() + " foglalás feldolgozva és hozzáadva az Activity listájához.");
-                } else {
-                    Log.d(TAG, "Nincsenek foglalások ('user_appointments/" + userIdForQuery + "') ehhez a felhasználóhoz az adatbázisban.");
+            public void onEvent(@Nullable QuerySnapshot snapshots,
+                                @Nullable FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w(TAG, "Firestore: Hiba a valós idejű figyelés során.", e);
+                    updateUIVisibility(true, "Hiba a foglalások frissítésekor.");
+                    return;
                 }
 
-                Log.d(TAG, "Adapter frissítése előtt, userAppointmentsList (Activity-ben) mérete: " + userAppointmentsList.size());
-                appointmentAdapter.updateAppointments(userAppointmentsList); // Átadjuk az Activity frissített listáját az adapternek
-                progressBarAppointments.setVisibility(View.GONE);
-
-                if (userAppointmentsList.isEmpty()) {
-                    tvNoUserAppointmentsMessage.setVisibility(View.VISIBLE);
-                    rvUserAppointments.setVisibility(View.GONE);
-                    Log.d(TAG, "Lista üres, 'Nincs foglalás' üzenet megjelenítve.");
+                userAppointmentsList.clear(); // Lista törlése minden frissítéskor
+                if (snapshots != null && !snapshots.isEmpty()) {
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Appointment appointment = doc.toObject(Appointment.class);
+                        // Az ID-t a Firestore dokumentum ID-jából vesszük, ha a modellben nincs setAppointmentId,
+                        // vagy ha a Firestore generálta az ID-t és a modellben is tárolni akarjuk.
+                        // A mi Appointment modellünknek van appointmentId mezője, amit a bookSlot-ban a Firestore ID-jával töltünk fel.
+                        // Tehát az appointment.getAppointmentId() már a helyes ID-t tartalmazza.
+                        userAppointmentsList.add(appointment);
+                        Log.v(TAG, "Firestore: Betöltött/frissített foglalás: " + appointment.toString());
+                    }
+                    // Rendezés (a query már rendezi bookingTimestamp szerint csökkenőbe)
+                    // Ha a query nem rendezné, itt kellene:
+                    // Collections.sort(userAppointmentsList, Comparator.comparingLong(Appointment::getBookingTimestamp).reversed());
+                    Log.d(TAG, "Firestore: " + userAppointmentsList.size() + " foglalás feldolgozva és hozzáadva a listához.");
                 } else {
-                    tvNoUserAppointmentsMessage.setVisibility(View.GONE);
-                    rvUserAppointments.setVisibility(View.VISIBLE);
-                    Log.d(TAG, "Lista nem üres, RecyclerView megjelenítve.");
+                    Log.d(TAG, "Firestore: Nincsenek foglalások ehhez a felhasználóhoz (snapshots üres vagy null).");
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e(TAG, "Hiba a foglalások lekérdezésekor: ", databaseError.toException());
-                Toast.makeText(AppointmentsActivity.this, "Hiba a foglalások betöltésekor.", Toast.LENGTH_SHORT).show();
-                progressBarAppointments.setVisibility(View.GONE);
-                tvNoUserAppointmentsMessage.setText("Hiba történt a foglalások betöltése közben.");
-                tvNoUserAppointmentsMessage.setVisibility(View.VISIBLE);
-                rvUserAppointments.setVisibility(View.GONE);
+                appointmentAdapter.updateAppointments(userAppointmentsList);
+                updateUIVisibility(userAppointmentsList.isEmpty(), "Nincsenek aktuális foglalásaid.");
             }
-        };
-        userAppointmentsQuery.addValueEventListener(appointmentsListener);
-        Log.d(TAG, "ValueEventListener hozzáadva a userAppointmentsQuery-hez.");
+        });
+        Log.d(TAG, "Firestore: Valós idejű listener hozzáadva a userAppointmentsQuery-hez.");
     }
+
+    /**
+     * Segédfüggvény a UI elemek láthatóságának kezelésére.
+     * @param showNoAppointmentsMessage Ha true, a "nincs foglalás" üzenet látszik, egyébként a lista.
+     * @param customMessage A "nincs foglalás" üzenet szövege, ha null, az alapértelmezett használatos.
+     */
+    private void updateUIVisibility(boolean showNoAppointmentsMessage, @Nullable String customMessage) {
+        progressBarAppointments.setVisibility(View.GONE); // A progressbart mindig elrejtjük, ha ez lefut
+        if (showNoAppointmentsMessage) {
+            tvNoUserAppointmentsMessage.setText(customMessage != null ? customMessage : "Nincsenek aktuális foglalásaid.");
+            tvNoUserAppointmentsMessage.setVisibility(View.VISIBLE);
+            rvUserAppointments.setVisibility(View.GONE);
+            Log.d(TAG, "UI frissítve: 'Nincs foglalás' üzenet látható (" + (customMessage != null ? customMessage : "alapértelmezett") + ").");
+        } else {
+            tvNoUserAppointmentsMessage.setVisibility(View.GONE);
+            rvUserAppointments.setVisibility(View.VISIBLE);
+            Log.d(TAG, "UI frissítve: Foglalások listája látható.");
+        }
+    }
+
+
+    // --- Implementáció az AppointmentAdapter.OnAppointmentActionListener interfészhez ---
 
     @Override
     public void onEditClicked(Appointment appointment) {
+        if (appointment == null || appointment.getAppointmentId() == null) {
+            Log.e(TAG, "onEditClicked: Appointment vagy Appointment ID null!");
+            Toast.makeText(this, "Hiba a foglalás kiválasztásakor.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Log.d(TAG, "Szerkesztés gomb megnyomva: " + appointment.toString());
         Intent intent = new Intent(this, EditAppointmentActivity.class);
         intent.putExtra("APPOINTMENT_ID", appointment.getAppointmentId());
@@ -196,6 +212,11 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
 
     @Override
     public void onDeleteClicked(final Appointment appointment) {
+        if (appointment == null || appointment.getAppointmentId() == null || appointment.getTimeSlotId() == null) {
+            Log.e(TAG, "onDeleteClicked: Appointment, Appointment ID vagy TimeSlot ID null!");
+            Toast.makeText(this, "Hiba a foglalás kiválasztásakor a törléshez.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Log.d(TAG, "Törlés gomb megnyomva: " + appointment.toString());
         new AlertDialog.Builder(this)
                 .setTitle("Foglalás Törlése")
@@ -204,26 +225,27 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
                         (appointment.getTime() != null ? appointment.getTime() : "") + "\n" +
                         (appointment.getMassageType() != null ? appointment.getMassageType() : ""))
                 .setPositiveButton("Törlés", (dialog, which) -> {
-                    progressBarAppointments.setVisibility(View.VISIBLE);
-                    firebaseHelper.cancelUserAppointment(
-                            currentUser.getUid(),
+                    if (currentUser == null) {
+                        Toast.makeText(this, "Hiba: Nincs bejelentkezett felhasználó a törléshez.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    progressBarAppointments.setVisibility(View.VISIBLE); // Töltés jelzése a törlés alatt
+                    firebaseHelper.cancelUserAppointment( // A Firestore verziót hívjuk
+                            // A cancelUserAppointment-nek most már csak appointmentId és timeSlotId kell
                             appointment.getAppointmentId(),
                             appointment.getTimeSlotId(),
                             new FirebaseHelper.OnOperationCompleteListener() {
                                 @Override
                                 public void onSuccess() {
-                                    // A progressBarAppointments elrejtése a loadUserAppointments onDataChange-ben történik meg.
-                                    // Itt nem kell külön, mert a ValueEventListener automatikusan frissít.
+                                    // A progressBarAppointments-t az onEvent listener fogja elrejteni, amikor a lista frissül
                                     Toast.makeText(AppointmentsActivity.this, "Foglalás sikeresen törölve.", Toast.LENGTH_SHORT).show();
-                                    Log.d(TAG, "Foglalás (" + appointment.getAppointmentId() + ") törölve, a lista frissülni fog a listener által.");
-                                    // Ha nem ValueEventListener-t használnánk, itt kellene manuálisan frissíteni az adaptert:
-                                    // userAppointmentsList.remove(appointment);
-                                    // appointmentAdapter.updateAppointments(userAppointmentsList);
+                                    Log.d(TAG, "Foglalás (" + appointment.getAppointmentId() + ") törölve, a lista frissülni fog a Firestore listener által.");
+                                    // A Firestore listener automatikusan frissíti a UI-t.
                                 }
 
                                 @Override
                                 public void onFailure(Exception e) {
-                                    progressBarAppointments.setVisibility(View.GONE);
+                                    progressBarAppointments.setVisibility(View.GONE); // Hiba esetén manuálisan elrejtjük
                                     Toast.makeText(AppointmentsActivity.this, "Hiba a foglalás törlésekor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     Log.e(TAG, "Hiba a foglalás törlésekor (" + appointment.getAppointmentId() + "): ", e);
                                 }
@@ -234,23 +256,30 @@ public class AppointmentsActivity extends AppCompatActivity implements Appointme
                 .show();
     }
 
+    // Kezeli az EditAppointmentActivity eredményét (ha van)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == EDIT_APPOINTMENT_REQUEST_CODE && resultCode == RESULT_OK) {
-            Log.d(TAG, "EditAppointmentActivity RESULT_OK, lista frissítése implicit módon a ValueEventListener által.");
+            Log.d(TAG, "EditAppointmentActivity RESULT_OK, a lista frissülni fog a Firestore listener által.");
             Toast.makeText(this, "Foglalás sikeresen módosítva.", Toast.LENGTH_SHORT).show();
-            // A ValueEventListener miatt a lista automatikusan frissül, ha az adatbázisban változás történt.
-            // Nincs szükség explicit loadUserAppointments() hívásra, ha a listener aktív.
+            // A Firestore listener miatt a lista automatikusan frissül.
         }
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (appointmentsListener != null && userAppointmentsQuery != null) {
-            userAppointmentsQuery.removeEventListener(appointmentsListener);
-            Log.d(TAG, "Appointments listener eltávolítva az onDestroy-ban.");
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart - Foglalások valós idejű figyelésének indítása.");
+        loadUserAppointmentsRealtime(); // Listener csatolása, amikor az Activity láthatóvá válik
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (appointmentsListenerRegistration != null) {
+            appointmentsListenerRegistration.remove(); // Listener eltávolítása, amikor az Activity már nem látható
+            Log.d(TAG, "onStop - Firestore listener eltávolítva.");
         }
     }
 }

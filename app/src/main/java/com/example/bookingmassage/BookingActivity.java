@@ -1,4 +1,4 @@
-package com.example.bookingmassage; // Ellenőrizd a csomagnevet!
+package com.example.bookingmassage;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
@@ -6,24 +6,23 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton; // HOZZÁADVA: ImageButton importálása
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-// Győződj meg róla, hogy a saját modelljeid és adaptered importálva vannak a helyes csomagból
 import com.example.bookingmassage.TimeSlotAdapter;
 import com.example.bookingmassage.TimeSlot;
 import com.example.bookingmassage.FirebaseHelper;
+// Nincs szükség a com.google.firebase.database.DatabaseError-ra
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseError;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -40,7 +39,7 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
 
     private TextView tvSelectedDate, tvNoSlotsMessage;
     private Button btnPickDate;
-    private ImageButton btnBackBooking; // HOZZÁADVA: Vissza gomb deklarálása
+    private ImageButton btnBackBooking;
     private RecyclerView rvTimeSlots;
     private ProgressBar progressBarBooking;
     private TimeSlotAdapter timeSlotAdapter;
@@ -51,7 +50,9 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
 
     private List<TimeSlot> currentTimeSlotsList = new ArrayList<>();
     private Calendar selectedCalendar = Calendar.getInstance();
+    // Magyar nyelvű, napnevet is tartalmazó formátum a megjelenítéshez
     private SimpleDateFormat dateFormatForDisplay = new SimpleDateFormat("yyyy. MMMM dd. (EEEE)", new Locale("hu", "HU"));
+    // Formátum a Firebase-ben tárolt és query-hez használt dátumokhoz
     private SimpleDateFormat dateFormatForFirebase = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
     @Override
@@ -60,23 +61,24 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
         setContentView(R.layout.activity_booking);
         Log.d(TAG, "onCreate elindult.");
 
+        // UI Elemek inicializálása
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
         btnPickDate = findViewById(R.id.btnPickDate);
-        btnBackBooking = findViewById(R.id.btnBackBooking); // HOZZÁADVA: Vissza gomb inicializálása
+        btnBackBooking = findViewById(R.id.btnBackBooking);
         rvTimeSlots = findViewById(R.id.rvTimeSlots);
         progressBarBooking = findViewById(R.id.progressBarBooking);
         tvNoSlotsMessage = findViewById(R.id.tvNoSlotsMessage);
 
-        // Null ellenőrzés kiegészítve a btnBackBooking-gal
-        if (rvTimeSlots == null || progressBarBooking == null || tvNoSlotsMessage == null ||
-                tvSelectedDate == null || btnPickDate == null || btnBackBooking == null) {
-            Log.e(TAG, "Egy vagy több UI elem null a findViewById után! Ellenőrizd az XML ID-kat.");
+        if (tvSelectedDate == null || btnPickDate == null || btnBackBooking == null ||
+                rvTimeSlots == null || progressBarBooking == null || tvNoSlotsMessage == null) {
+            Log.e(TAG, "Egy vagy több UI elem null a findViewById után! Ellenőrizd az activity_booking.xml ID-kat.");
             Toast.makeText(this, "Hiba a felület betöltésekor.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        firebaseHelper = new FirebaseHelper();
+        // Firebase inicializálás
+        firebaseHelper = new FirebaseHelper(); // Ennek most Firestore logikát kell tartalmaznia
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
 
@@ -91,26 +93,17 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
         Log.d(TAG, "Bejelentkezett felhasználó: " + currentUser.getEmail());
 
         setupRecyclerView();
-        setInitialDateAndLoadSlots();
+        setInitialDateAndLoadSlots(); // Kezdeti dátum beállítása és időpontok betöltése
 
         btnPickDate.setOnClickListener(v -> showDatePickerDialog());
-
-        // HOZZÁADVA: Vissza gomb OnClickListener beállítása
-        btnBackBooking.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Vissza gomb (btnBackBooking) megnyomva.");
-                onBackPressed(); // Meghívja az alapértelmezett vissza viselkedést (általában finish())
-                // Vagy használhatod közvetlenül a finish()-t is:
-                // finish();
-            }
+        btnBackBooking.setOnClickListener(v -> {
+            Log.d(TAG, "Vissza gomb (btnBackBooking) megnyomva.");
+            onBackPressed();
         });
     }
 
     private void setupRecyclerView() {
-        rvTimeSlots.setLayoutManager(new GridLayoutManager(this, 3));
-        // Az adapter konstruktorát ellenőrizd, hogy a TimeSlotAdapter osztályod milyen paramétereket vár.
-        // A TimeSlotAdapter.OnTimeSlotClickListener interfészt ez az Activity implementálja, ezért 'this'.
+        rvTimeSlots.setLayoutManager(new GridLayoutManager(this, 3)); // 3 oszlopos grid
         timeSlotAdapter = new TimeSlotAdapter(currentTimeSlotsList, this);
         rvTimeSlots.setAdapter(timeSlotAdapter);
         Log.d(TAG, "RecyclerView és TimeSlotAdapter beállítva.");
@@ -124,11 +117,11 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
         int dayOfWeek = selectedCalendar.get(Calendar.DAY_OF_WEEK);
         if (dayOfWeek == Calendar.SATURDAY) {
             selectedCalendar.add(Calendar.DAY_OF_MONTH, 2);
-            Log.d(TAG, "Ma szombat, a kiválasztott dátum a következő hétfőre állítva.");
         } else if (dayOfWeek == Calendar.SUNDAY) {
             selectedCalendar.add(Calendar.DAY_OF_MONTH, 1);
-            Log.d(TAG, "Ma vasárnap, a kiválasztott dátum a következő hétfőre állítva.");
         }
+        // Opcionális: Ha ma már elmúlt 17:00, és hétköznap van, ugorjon a következő munkanapra
+        // ... (ezt a logikát hozzáadhatod, ha szükséges)
 
         updateDateLabel();
         loadTimeSlotsForDate(dateFormatForFirebase.format(selectedCalendar.getTime()));
@@ -150,8 +143,7 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
                 selectedCalendar.get(Calendar.MONTH),
                 selectedCalendar.get(Calendar.DAY_OF_MONTH));
 
-        datePickerDialog.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis() - 1000);
-
+        datePickerDialog.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis() - 1000); // Mai naptól
         datePickerDialog.show();
     }
 
@@ -161,7 +153,7 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
     }
 
     private void loadTimeSlotsForDate(String dateString) {
-        Log.i(TAG, "loadTimeSlotsForDate hívva a következő dátummal: " + dateString);
+        Log.i(TAG, "Firestore: loadTimeSlotsForDate hívva a következő dátummal: " + dateString);
         progressBarBooking.setVisibility(View.VISIBLE);
         rvTimeSlots.setVisibility(View.GONE);
         tvNoSlotsMessage.setVisibility(View.GONE);
@@ -172,8 +164,7 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
         } catch (ParseException e) {
             Log.e(TAG, "Hiba a dátum ('" + dateString + "') parse-olásakor a hétvége ellenőrzéshez.", e);
             progressBarBooking.setVisibility(View.GONE);
-            tvNoSlotsMessage.setText("Hibás dátum formátum.");
-            tvNoSlotsMessage.setVisibility(View.VISIBLE);
+            updateUIVisibility(true, "Hibás dátum formátum.");
             return;
         }
 
@@ -184,63 +175,73 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
             currentTimeSlotsList.clear();
             timeSlotAdapter.notifyDataSetChanged();
             progressBarBooking.setVisibility(View.GONE);
-            tvNoSlotsMessage.setText("Hétvégén nincs időpontfoglalás. Kérjük, válasszon hétköznapot.");
-            tvNoSlotsMessage.setVisibility(View.VISIBLE);
+            updateUIVisibility(true, "Hétvégén nincs időpontfoglalás. Kérjük, válasszon hétköznapot.");
             return;
         }
 
+        // A FirebaseHelper.getTimeSlotsForDate Firestore verzióját hívjuk
         firebaseHelper.getTimeSlotsForDate(dateString, new FirebaseHelper.OnTimeSlotsLoadedListener() {
             @Override
-            public void onLoaded(List<TimeSlot> timeSlotsFromFirebase) {
-                Log.d(TAG, "FirebaseHelper.onLoaded: " + timeSlotsFromFirebase.size() + " időpont (nyers) betöltve " + dateString + " napra az adatbázisból.");
+            public void onLoaded(List<TimeSlot> timeSlotsFromFirestore) {
+                Log.d(TAG, "Firestore OnTimeSlotsLoadedListener.onLoaded: " + timeSlotsFromFirestore.size() + " időpont (nyers) betöltve " + dateString + " napra.");
                 currentTimeSlotsList.clear();
 
-                if (!timeSlotsFromFirebase.isEmpty()) {
-                    for (TimeSlot slot : timeSlotsFromFirebase) {
+                if (!timeSlotsFromFirestore.isEmpty()) {
+                    for (TimeSlot slot : timeSlotsFromFirestore) {
+                        // A Firestore query már tartalmazza a rendezést 'time' alapján,
+                        // és a helper a 'date' alapján szűr.
+                        // Az órák (8-17) szűrését a time_slots generálásának kell biztosítania.
+                        // De egy plusz ellenőrzés itt nem árt, ha a generálás nem tökéletes.
                         try {
                             if (slot.getTime() != null && slot.getTime().matches("\\d{2}:\\d{2}")) {
                                 int hour = Integer.parseInt(slot.getTime().substring(0, 2));
                                 if (hour >= 8 && hour < 18) {
                                     currentTimeSlotsList.add(slot);
                                 } else {
-                                    Log.w(TAG, "Kiszűrt időpont (órán kívül esik): " + slot.getTime() + " a " + dateString + " napon.");
+                                    Log.w(TAG, "Kiszűrt időpont (órán kívül esik Firestore-ból): " + slot.getTime() + " a " + dateString + " napon.");
                                 }
                             } else {
-                                Log.w(TAG, "Hibás idő formátum vagy null idő az időpontban: " + slot.toString());
+                                Log.w(TAG, "Hibás idő formátum vagy null idő a Firestore időpontban: " + slot.toString());
                             }
                         } catch (Exception e) {
-                            Log.e(TAG, "Hiba az időpont feldolgozásakor az óra ellenőrzésénél: " + slot.toString(), e);
+                            Log.e(TAG, "Hiba az időpont feldolgozásakor (Firestore): " + slot.toString(), e);
                         }
                     }
-                    Collections.sort(currentTimeSlotsList, Comparator.comparing(TimeSlot::getTime));
+                    // Ha a Firestore query nem rendezne, itt kellene:
+                    // Collections.sort(currentTimeSlotsList, Comparator.comparing(TimeSlot::getTime));
                 }
 
-                timeSlotAdapter.notifyDataSetChanged();
+                timeSlotAdapter.updateTimeSlots(currentTimeSlotsList); // Az adapter update metódusát hívjuk
                 progressBarBooking.setVisibility(View.GONE);
-
-                if (currentTimeSlotsList.isEmpty()) {
-                    Log.d(TAG, "Nincsenek megjeleníthető (szűrt) időpontok " + dateString + " napra.");
-                    tvNoSlotsMessage.setText("Nincsenek elérhető időpontok ezen a napon.");
-                    tvNoSlotsMessage.setVisibility(View.VISIBLE);
-                    rvTimeSlots.setVisibility(View.GONE);
-                } else {
-                    tvNoSlotsMessage.setVisibility(View.GONE);
-                    rvTimeSlots.setVisibility(View.VISIBLE);
-                }
+                updateUIVisibility(currentTimeSlotsList.isEmpty(), "Nincsenek elérhető időpontok ezen a napon.");
                 Log.d(TAG, currentTimeSlotsList.size() + " időpont jelenik meg a RecyclerView-ban a " + dateString + " napra.");
             }
 
             @Override
-            public void onError(DatabaseError databaseError) {
-                Log.e(TAG, "Hiba az időpontok lekérdezésekor a FirebaseHelperből: " + databaseError.getMessage());
-                Toast.makeText(BookingActivity.this, "Hiba az időpontok lekérdezésekor.", Toast.LENGTH_LONG).show();
+            public void onError(Exception e) { // A paraméter típusa Exception
+                Log.e(TAG, "Hiba az időpontok lekérdezésekor a FirebaseHelperből (Firestore): ", e);
+                Toast.makeText(BookingActivity.this, "Hiba az időpontok lekérdezésekor: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 progressBarBooking.setVisibility(View.GONE);
-                tvNoSlotsMessage.setText("Hiba történt az időpontok betöltése közben.");
-                tvNoSlotsMessage.setVisibility(View.VISIBLE);
-                rvTimeSlots.setVisibility(View.GONE);
+                updateUIVisibility(true, "Hiba történt az időpontok betöltése közben.");
             }
         });
     }
+
+    /**
+     * Segédfüggvény a UI elemek láthatóságának kezelésére.
+     */
+    private void updateUIVisibility(boolean showNoSlotsMessage, @Nullable String message) {
+        if (showNoSlotsMessage) {
+            tvNoSlotsMessage.setText(message != null ? message : "Nincsenek elérhető időpontok ezen a napon.");
+            tvNoSlotsMessage.setVisibility(View.VISIBLE);
+            rvTimeSlots.setVisibility(View.GONE);
+        } else {
+            tvNoSlotsMessage.setVisibility(View.GONE);
+            rvTimeSlots.setVisibility(View.VISIBLE);
+        }
+        Log.d(TAG, "updateUIVisibility: showNoSlotsMessage=" + showNoSlotsMessage + ", rvVisible=" + (rvTimeSlots.getVisibility() == View.VISIBLE));
+    }
+
 
     @Override
     public void onTimeSlotClicked(TimeSlot timeSlot) {
@@ -259,24 +260,21 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Foglalás: " + timeSlot.getDate() + " " + timeSlot.getTime());
-
         builder.setSingleChoiceItems(massageTypes, -1, (dialog, which) -> {
-            // Itt nem csinálunk semmit a kiválasztáskor, a logikát a "Lefoglalom" gomb kezeli
+            // A választást a "Lefoglalom" gomb fogja kezelni
         });
 
         builder.setPositiveButton("Lefoglalom", (dialog, whichButton) -> {
             int selectedPosition = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
             if (selectedPosition == -1) {
                 Toast.makeText(BookingActivity.this, "Kérjük, válasszon masszázs típust!", Toast.LENGTH_SHORT).show();
-                // Nem zárjuk be a dialógust, hogy a felhasználó választhasson
-                // Ha azt akarod, hogy ilyenkor se záródjon be, akkor trükközni kell a dialógus gombjainak felüldefiniálásával.
-                // Egyelőre ez a Toast elég visszajelzésnek, és a felhasználó újra próbálkozhat.
                 return;
             }
             String selectedMassageType = massageTypes[selectedPosition];
             Log.d(TAG, "Foglalás megerősítve: " + selectedMassageType + " az időpontra: " + timeSlot.getId());
             progressBarBooking.setVisibility(View.VISIBLE);
 
+            // A FirebaseHelper.bookSlot Firestore verzióját hívjuk
             firebaseHelper.bookSlot(
                     timeSlot.getId(),
                     userId,
@@ -287,21 +285,20 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
                         @Override
                         public void onSuccess() {
                             progressBarBooking.setVisibility(View.GONE);
-                            Log.d(TAG, "Sikeres foglalás (callback). Időpont: " + timeSlot.getId());
+                            Log.d(TAG, "Firestore: Sikeres foglalás (callback). Időpont: " + timeSlot.getId());
                             Toast.makeText(BookingActivity.this, "Időpont sikeresen lefoglalva!", Toast.LENGTH_LONG).show();
-                            loadTimeSlotsForDate(dateFormatForFirebase.format(selectedCalendar.getTime()));
+                            loadTimeSlotsForDate(dateFormatForFirebase.format(selectedCalendar.getTime())); // Frissítjük a listát
                         }
 
                         @Override
-                        public void onFailure(Exception e) {
+                        public void onFailure(Exception e) { // Exception a paraméter
                             progressBarBooking.setVisibility(View.GONE);
-                            Log.e(TAG, "Foglalás sikertelen (callback). Időpont: " + timeSlot.getId(), e);
+                            Log.e(TAG, "Firestore: Foglalás sikertelen (callback). Időpont: " + timeSlot.getId(), e);
                             Toast.makeText(BookingActivity.this, "Hiba a foglalás során: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            loadTimeSlotsForDate(dateFormatForFirebase.format(selectedCalendar.getTime()));
+                            loadTimeSlotsForDate(dateFormatForFirebase.format(selectedCalendar.getTime())); // Frissítés hiba esetén is
                         }
                     }
             );
-            // A dialógus automatikusan bezáródik a setPositiveButton eseménykezelőjének lefutása után.
         });
         builder.setNegativeButton("Mégse", (dialog, whichButton) -> dialog.dismiss());
         builder.show();
@@ -311,6 +308,8 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "onStart");
+        // A loadTimeSlotsForDate már az onCreate-ben és a dátumválasztáskor is meghívódik,
+        // itt nem feltétlenül szükséges újra hívni, hacsak nincs specifikus ok.
     }
 
     @Override
@@ -323,5 +322,7 @@ public class BookingActivity extends AppCompatActivity implements TimeSlotAdapte
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "onStop");
+        // Ha a getTimeSlotsForDate addSnapshotListener-t használna, itt kellene leiratkozni.
+        // De mivel .get()-et használunk, ami egyszeri lekérés, itt nincs teendő a listenerrel.
     }
 }

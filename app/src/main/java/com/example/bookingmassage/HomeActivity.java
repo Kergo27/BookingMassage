@@ -24,9 +24,9 @@ public class HomeActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         //firebaseHelper = new FirebaseHelper();
-        //firebaseHelper.generateInitialTimeSlotsForUpcomingWeek(); // TESZTELÉSHEZ EGYSZER FUTTASD, MAJD KOMMENTELD KI!
+        //firebaseHelper.generateTimeSlotsForMonths(6);// TESZTELÉSHEZ EGYSZER FUTTASD, MAJD KOMMENTELD KI!
 
-        //firebaseHelper.generateInitialTimeSlotsForUpcomingWeek();
+
 
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnBookAppointment = findViewById(R.id.btnBookAppointment); // Új ID az XML-ben
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnMyBookings = findViewById(R.id.btnMyBookings);       // Új ID az XML-ben
