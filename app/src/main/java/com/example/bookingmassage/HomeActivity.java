@@ -1,83 +1,103 @@
 package com.example.bookingmassage;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
+// import android.widget.TextView; // Ezt most nem használjuk az eredmény közvetlen megjelenítésére
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.bookingmassage.TimeSlot;
+import com.example.bookingmassage.FirebaseHelper;
+import com.example.bookingmassage.NotificationHelper; // ÚJ IMPORT
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.List;
+
 public class HomeActivity extends AppCompatActivity {
+
     private static final String TAG = "HomeActivity";
     private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
     private FirebaseHelper firebaseHelper;
-    // private FirebaseHelper firebaseHelper; // Ha szükség van rá itt is
+    private NotificationHelper notificationHelper; // ÚJ
+
+    private Button btnBookAppointment, btnMyBookings, btnLogout;
+    private Button btnFindNextSlots;
+    // private TextView tvNextAvailableSlotsResult; // Ezt most nem használjuk
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homepage);
-        Log.d(TAG, "onCreate");
+        Log.d(TAG, "onCreate elindult.");
 
         mAuth = FirebaseAuth.getInstance();
-        //firebaseHelper = new FirebaseHelper();
-        //firebaseHelper.generateTimeSlotsForMonths(6);// TESZTELÉSHEZ EGYSZER FUTTASD, MAJD KOMMENTELD KI!
+        currentUser = mAuth.getCurrentUser();
+        firebaseHelper = new FirebaseHelper();
+        notificationHelper = new NotificationHelper(this); // NotificationHelper inicializálása
 
-
-
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnBookAppointment = findViewById(R.id.btnBookAppointment); // Új ID az XML-ben
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) Button btnMyBookings = findViewById(R.id.btnMyBookings);       // Új ID az XML-ben
-        Button btnLogout = findViewById(R.id.btnLogout);               // Új ID az XML-ben
-
-        btnBookAppointment.setOnClickListener(v -> {
-            Log.d(TAG, "Időpontfoglalás gomb megnyomva.");
-            startActivity(new Intent(HomeActivity.this, BookingActivity.class));
-        });
-
-        btnMyBookings.setOnClickListener(v -> {
-            Log.d(TAG, "Foglalásaim gomb megnyomva.");
-            startActivity(new Intent(HomeActivity.this, AppointmentsActivity.class));
-        });
-
-        btnLogout.setOnClickListener(v -> {
-            Log.d(TAG, "Kijelentkezés gomb megnyomva.");
-            mAuth.signOut();
-            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            // Nincs bejelentkezett felhasználó, visszairányítás a LoginActivity-re
-            Log.d(TAG, "Nincs bejelentkezett felhasználó, visszairányítás a LoginActivity-re.");
-            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        } else {
-            Log.d(TAG, "Felhasználó bejelentkezve: " + currentUser.getEmail());
+            // ... (átirányítás)
+            return;
+        }
+
+        btnBookAppointment = findViewById(R.id.btnBookAppointment);
+        btnMyBookings = findViewById(R.id.btnMyBookings);
+        btnLogout = findViewById(R.id.btnLogout);
+        btnFindNextSlots = findViewById(R.id.btnFindNextSlots); // Győződj meg róla, hogy ez az ID létezik az XML-ben
+        // tvNextAvailableSlotsResult = findViewById(R.id.tvNextAvailableSlotsResult); // Ezt most nem használjuk
+
+        // ... (gomb listenerek a többi gombhoz)
+
+        if (btnFindNextSlots != null) {
+            btnFindNextSlots.setOnClickListener(v -> {
+                Log.d(TAG, "btnFindNextSlots gomb megnyomva.");
+                Toast.makeText(this, "Legközelebbi szabad időpontok keresése...", Toast.LENGTH_SHORT).show();
+
+                // Mai naptól kezdve az első 3 szabad időpont lekérése
+                firebaseHelper.getNextXAvailableTimeSlots(null, 3, new FirebaseHelper.OnTimeSlotsLoadedListener() {
+                    @Override
+                    public void onLoaded(List<TimeSlot> timeSlots) {
+                        if (timeSlots.isEmpty()) {
+                            Log.i(TAG, "Nincsenek elérhető szabad időpontok a közeljövőben.");
+                            notificationHelper.showAvailableSlotsNotification(
+                                    "Szabad Időpontok",
+                                    "Jelenleg nincsenek közeli szabad időpontok.",
+                                    0 // Egyedi ID offset az értesítéshez
+                            );
+                        } else {
+                            Log.i(TAG, "Talált szabad időpontok (" + timeSlots.size() + " db):");
+                            StringBuilder notificationMessage = new StringBuilder("Legközelebbi szabad időpontok:\n");
+                            for (int i = 0; i < timeSlots.size(); i++) {
+                                TimeSlot slot = timeSlots.get(i);
+                                Log.d(TAG, " - " + slot.getDate() + " " + slot.getTime());
+                                notificationMessage.append(slot.getDate()).append(" ").append(slot.getTime()).append("\n");
+                            }
+                            // Csak egy értesítést küldünk a listával
+                            notificationHelper.showAvailableSlotsNotification(
+                                    "Talált Szabad Időpontok!",
+                                    notificationMessage.toString().trim(), // Levágjuk a felesleges utolsó newline-t
+                                    1 // Egyedi ID offset az értesítéshez
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e(TAG, "Hiba a legközelebbi szabad időpontok lekérdezésekor: ", e);
+                        notificationHelper.showAvailableSlotsNotification(
+                                "Hiba történt",
+                                "Nem sikerült lekérdezni a szabad időpontokat.",
+                                2 // Egyedi ID offset az értesítéshez
+                        );
+                        Toast.makeText(HomeActivity.this, "Hiba: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            });
         }
     }
-
-    // Lifecycle Hookok (onPause, onResume) itt is lehetnek, ha szükséges
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume");
-    }
+    // ... (többi HomeActivity kód)
 }
