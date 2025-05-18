@@ -1,6 +1,8 @@
 [versions]
 agp = "8.9.1"
+compiler = "4.12.0"
 firebaseBom = "33.12.0"
+firebaseBomVersion = "33.13.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -9,10 +11,18 @@ material = "1.10.0"
 firebaseAuth = "23.2.0"
 playServicesAuth = "21.3.0"
 playServicesTasks = "18.2.1"
+firebaseDatabase = "21.0.0"
+firebaseCrashlyticsBuildtools = "3.0.3"
+firebaseFirestore = "25.1.4"
+recyclerview = "1.4.0"
+recyclerviewSelection = "1.1.0"
 
 [libraries]
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-bom-v33130 = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -22,6 +32,11 @@ material = { group = "com.google.android.material", name = "material", version.r
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version.ref = "playServicesTasks" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database", version.ref = "firebaseDatabase" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
+recyclerview-selection = { module = "androidx.recyclerview:recyclerview-selection", version.ref = "recyclerviewSelection" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

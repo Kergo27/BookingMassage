@@ -8,4 +8,25 @@
     <item name="headerimage" type="id" />
     <item name="userEmailEditText" type="id" />
     <item name="passwordAgainEditText" type="id" />
+    <item name="progressBarLogin" type="id" />
+    <item name="cancelButton" type="id" />
+    <item name="progressBarRegister" type="id" />
+    <item name="capturedImageView" type="id" />
+    <item name="logoutButton" type="id" />
+    <item name="appointmentButton" type="id" />
+    <item name="cameraButton" type="id" />
+    <item name="tvDate" type="id" />
+    <item name="tvTime" type="id" />
+    <item name="tvService" type="id" />
+    <item name="datePicker" type="id" />
+    <item name="timePicker" type="id" />
+    <item name="spinnerServices" type="id" />
+    <item name="recyclerView" type="id" />
+    <item name="viewPager" type="id" />
+    <item name="tabLayout" type="id" />
+    <item name="btnBookAppointment" type="id" />
+    <item name="btnMyBookings" type="id" />
+    <item name="tvSelectedDate" type="id" />
+    <item name="btnPickDate" type="id" />
+    <item name="rvTimeSlots" type="id" />
 </resources>

@@ -34,21 +34,28 @@ android {
 
 dependencies {
 
+
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.firebase.auth)
     implementation(libs.play.services.tasks)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
-    implementation ("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
-    implementation ("androidx.recyclerview:recyclerview:1.1.0")
-    implementation ("androidx.recyclerview:recyclerview-selection:1.1.0")
+    implementation(platform(libs.firebase.bom.v33130))
+    implementation (libs.glide)
+    annotationProcessor (libs.compiler)
+    implementation (libs.recyclerview)
+    implementation (libs.recyclerview.selection)
     implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+
 
 }

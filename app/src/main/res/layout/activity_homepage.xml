@@ -5,61 +5,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
-    tools:context=".HomepageActivity">
+    tools:context=".HomeActivity">
 
-
-    <ImageView
-        android:id="@+id/headerimage"
-        android:layout_width="106dp"
-        android:layout_height="110dp"
-        android:layout_marginTop="112dp"
-        android:contentDescription="logo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
+    <Button
+        android:id="@+id/btnBookAppointment"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/book_appointment"
+        android:layout_marginTop="20mm"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/cimke2" />
-
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="217dp"
-        android:layout_height="50dp"
-        android:layout_marginBottom="28dp"
-        android:backgroundTint="@color/black"
-        android:onClick="refresh"
-        android:text="Főmenü"
-        app:layout_constraintBottom_toTopOf="@+id/button5"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/button4"
-        android:layout_width="217dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="212dp"
-        android:backgroundTint="@color/black"
-        android:onClick="goToAppointment"
-        android:text="Foglalás"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerimage" />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="InOrMmUsage" />
 
     <Button
-        android:id="@+id/button5"
-        android:layout_width="217dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="48dp"
-        android:backgroundTint="@color/black"
-        android:onClick="logout"
-        android:text="Kijelentkezés"
+        android:id="@+id/btnMyBookings"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/my_appointments"
+        app:layout_constraintTop_toBottomOf="@+id/btnBookAppointment"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/logout"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button4"
-        app:layout_constraintVertical_bias="0.914" />
-
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,4 +1,4 @@
 package com.example.bookingmassage;
 
-public class Idopont {
+public @interface NonNull {
 }

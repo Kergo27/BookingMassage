@@ -1,8 +1,30 @@
 <resources>
-    <string name="app_name">BookingMassage</string>
-    <string name="username_text" />
-    <string name="password_text" />
-    <string name="login_text" />
-    <string name="not_registered" />
-    <string name="register_text" />
+    <string name="app_name">Massage Booking</string>
+    <string name="email">Email</string>
+    <string name="password">Jelszó</string>
+    <string name="login">Bejelentkezés</string>
+    <string name="register_prompt">Nincs fiókod? Regisztrálj!</string>
+    <string name="header_image_desc" />
+    <string name="book_appointment">Időpontfoglalás\n</string>
+    <string name="my_appointments">Foglalt időpontjaim</string>
+    <string name="logout">Kijelentkezés</string>
+    <string name="confirm_booking">Időpontfoglalás</string>
+    <string name="confirm_password">Jelszó megerősítése</string>
+
+
+    <string name="registration_title">Regisztráció</string>
+    <string name="email_hint">Email cím</string>
+    <string name="password_hint">Jelszó (min. 6 karakter)</string>
+    <string name="confirm_password_hint">Jelszó megerősítése</string>
+    <string name="phone_number_hint">Telefonszám (opcionális)</string>
+    <string name="register_button">Regisztrálok</string>
+    <string name="back_to_login_prompt">Már van fiókod? Vissza a bejelentkezéshez</string>
+
+
+    <string-array name="services_array">
+        <item>Svéd masszázs</item>
+        <item>Thai masszázs</item>
+        <item>Sport masszázs</item>
+        <item>Relaxációs masszázs</item>
+    </string-array>
 </resources>
