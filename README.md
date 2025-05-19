@@ -2,18 +2,20 @@
 
 Kedves Javító.
 
-A programom nincsen kész, kicsit előrébb haladott, mint az első mérföldkő-
+A programomban kész van.
 
 Ami van a programomban:
 - Elv nincs fordítási hiba, lefut és a működik az applikáció
-- Futtatási hiba sincs, mind addig, amíg a foglalásra rá nem nyomsz.(elvileg nem fagy ki, vissza dob a fő oldalra)
-- Jelenleg 3 activity
+- Futtatási hiba sincs.
+- Jelenleg 7 activity
 - Beviteli mezők típusa megfelelő (jelszó csillagozva etc)
 - Reszponzív
 - Több mint 2 animáció (blink, fade_in, slide_in_row)
-- Lehet az oldalak között lépegetni(főmenü, kijelentkezés, bejelentkezés vendégként)
+- Lehet az oldalak között lépegetni(főmenü, kijelentkezés, foglalás, saját fogalalás etc)
 - Van android permission
-- van Nocification
+- van Nocification, job scheduler(hogy ha véletlen nem hozol létre időpontot, automatikus létrehozza)
+- -3 komplex lekérdezés(Szabad időpontok az adott napra,felhasználó által lefoglalt időpontok, a következő 3 nap 3 legkorábbi szabad időpontja)
+- 
 
 Bármi kérdésed van, vagy esetleg gyorsabban akarsz haladni a javítással, írj 
 Discordon: zsami1127
