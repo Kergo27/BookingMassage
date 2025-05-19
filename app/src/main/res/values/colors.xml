@@ -33,4 +33,47 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
 
+    <!-- Material 3 Theme Colors (Példa - Generáld a sajátodat!) -->
+    <!-- Világos Téma Színei -->
+    <color name="md_theme_primary">#6750A4</color> <!-- Elsődleges szín (pl. gombokhoz, fontos elemekhez) -->
+    <color name="md_theme_onPrimary">#FFFFFF</color> <!-- Szöveg/ikon színe az elsődleges színen -->
+    <color name="md_theme_primaryContainer">#EADDFF</color> <!-- Konténer az elsődleges színhez (kevésbé hangsúlyos) -->
+    <color name="md_theme_onPrimaryContainer">#21005D</color>
+
+    <color name="md_theme_secondary">#625B71</color> <!-- Másodlagos szín -->
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#E8DEF8</color>
+    <color name="md_theme_onSecondaryContainer">#1D192B</color>
+
+    <color name="md_theme_tertiary">#7D5260</color> <!-- Harmadlagos szín -->
+    <color name="md_theme_onTertiary">#FFFFFF</color>
+    <color name="md_theme_tertiaryContainer">#FFD8E4</color>
+    <color name="md_theme_onTertiaryContainer">#31111D</color>
+
+    <color name="md_theme_error">#B3261E</color> <!-- Hiba színe -->
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#F9DEDC</color>
+    <color name="md_theme_onErrorContainer">#410E0B</color>
+
+    <color name="md_theme_background">#FFFBFE</color> <!-- Alkalmazás általános háttere -->
+    <color name="md_theme_onBackground">#1C1B1F</color> <!-- Szöveg/ikon színe a háttéren -->
+    <color name="md_theme_surface">#FFFBFE</color> <!-- Komponensek felületének színe (pl. CardView, Toolbar) -->
+    <color name="md_theme_onSurface">#1C1B1F</color>
+    <color name="md_theme_surfaceVariant">#E7E0EC</color> <!-- Felület egy variánsa -->
+    <color name="md_theme_onSurfaceVariant">#49454F</color>
+    <color name="md_theme_outline">#79747E</color> <!-- Körvonalak színe (pl. OutlinedButton, TextInputLayout) -->
+    <color name="md_theme_outlineVariant">#CAC4D0</color> <!-- Körvonal variáns -->
+    <color name="md_theme_shadow">#000000</color>
+    <color name="md_theme_scrim">#000000</color>
+    <color name="md_theme_inverseSurface">#313033</color>
+    <color name="md_theme_inverseOnSurface">#F4EFF4</color>
+    <color name="md_theme_inversePrimary">#D0BCFF</color>
+    <color name="md_theme_surfaceDim">#DED8E1</color>
+    <color name="md_theme_surfaceBright">#FFFBFE</color>
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color> <!-- Nagyon világos konténer háttér -->
+    <color name="md_theme_surfaceContainerLow">#F7F2FA</color>
+    <color name="md_theme_surfaceContainer">#F3EDF7</color>
+    <color name="md_theme_surfaceContainerHigh">#ECE6F0</color>
+    <color name="md_theme_surfaceContainerHighest">#E6E0E9</color>
+
 </resources>

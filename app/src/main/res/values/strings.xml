@@ -19,6 +19,7 @@
     <string name="phone_number_hint">Telefonszám (opcionális)</string>
     <string name="register_button">Regisztrálok</string>
     <string name="back_to_login_prompt">Már van fiókod? Vissza a bejelentkezéshez</string>
+    <string name="home_title">Időpontfoglalás és módosítási oldal</string>
 
 
     <string-array name="services_array">

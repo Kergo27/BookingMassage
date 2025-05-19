@@ -1,5 +1,6 @@
 package com.example.bookingmassage; // Győződj meg róla, hogy a csomagnév helyes
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences; // Ha használod a felhasználónév mentéséhez
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
@@ -32,26 +34,29 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword; // Korábban usernameET, passwordET volt, az XML-hez igazítva
     private Button btnLogin; // Korábban loginB volt
-    private TextView tvRegister; // A regisztrációs TextView
+    private Button btnGoToRegister;  // A regisztrációs TextView
     private ImageView ivLogo; // Korábban headerImage volt
     // private ProgressBar progressBar; // Ha van ProgressBar a layoutban
 
     private FirebaseAuth mAuth;
     // private SharedPreferences preferences; // Ha használod
 
+    @SuppressLint({"MissingInflatedId", "WrongViewCast"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        MaterialToolbar toolbarLogin = findViewById(R.id.toolbarLogin);
+        setSupportActionBar(toolbarLogin);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main); // Győződj meg róla, hogy ez a layoutod neve
 
         mAuth = FirebaseAuth.getInstance();
 
         // View-k inicializálása
-        etEmail = findViewById(R.id.etEmail); // Az XML-ben lévő ID alapján
-        etPassword = findViewById(R.id.etPassword); // Az XML-ben lévő ID alapján
+        etEmail = findViewById(R.id.etEmailLogin); // Az XML-ben lévő ID alapján
+        etPassword = findViewById(R.id.etPasswordLogin); // Az XML-ben lévő ID alapján
         btnLogin = findViewById(R.id.btnLogin); // Az XML-ben lévő ID alapján
-        tvRegister = findViewById(R.id.tvRegister); // Az XML-ben lévő ID alapján
-        ivLogo = findViewById(R.id.ivLogo); // Az XML-ben lévő ID alapján
+        btnGoToRegister = findViewById(R.id.btnGoToRegister); // Az XML-ben lévő ID alapján
+        ivLogo = findViewById(R.id.btnLogout); // Az XML-ben lévő ID alapján
         // progressBar = findViewById(R.id.progressBarLogin); // Ha van
 
         // preferences = getSharedPreferences(PREF_KEY, MODE_PRIVATE); // Ha használod
@@ -70,8 +75,8 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // OnClickListener a regisztráció TextView-ra
-        if (tvRegister != null) {
-            tvRegister.setOnClickListener(new View.OnClickListener() {
+        if (btnGoToRegister != null) {
+            btnGoToRegister.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Log.d(LOG_TAG, "Regisztráció link/gomb megnyomva."); // Log üzenet hibakereséshez
