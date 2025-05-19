@@ -8,80 +8,103 @@
     tools:context=".HomeActivity">
 
     <!-- AppBarLayout a Toolbarhoz (fejléc) -->
-<com.google.android.material.appbar.AppBarLayout
-android:id="@+id/appBarLayoutHome"
-android:layout_width="0dp"
-android:layout_height="wrap_content"
-app:layout_constraintTop_toTopOf="parent"
-app:layout_constraintStart_toStartOf="parent"
-app:layout_constraintEnd_toEndOf="parent"
-android:background="?attr/colorSurface"
-app:elevation="0dp">
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayoutHome"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="?attr/colorSurface"
+        app:elevation="0dp">
 
-</com.google.android.material.appbar.AppBarLayout>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarHome"
+
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/home_title"
+        app:titleCentered="true"
+        app:titleTextColor="?attr/colorOnSurface" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Gombok és egyéb tartalom egy vertikális láncban középen -->
-    <!-- A lánc stílusát "packed"-re állítjuk, hogy összetömörítse az elemeket középen -->
-<Button
-android:id="@+id/btnBookAppointment"
-style="?attr/materialButtonStyle"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="32dp"
-    android:layout_marginEnd="32dp"
-    android:layout_marginTop="32dp"
-    android:text="@string/book_appointment"
-    android:paddingVertical="12dp"
-    app:layout_constraintTop_toBottomOf="@+id/appBarLayoutHome"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintBottom_toTopOf="@+id/btnMyBookings"
-    app:layout_constraintVertical_chainStyle="packed"
-    app:layout_constraintVertical_bias="0.3"
+    <Button
+        android:id="@+id/btnBookAppointment"
+        style="?attr/materialButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginTop="32dp"
+        android:text="@string/book_appointment"
+        android:paddingVertical="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayoutHome"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnMyBookings"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.2"
     app:layout_constraintWidth_max="350dp"/>
 
-<Button
-android:id="@+id/btnMyBookings"
-style="?attr/materialButtonStyle"
-android:layout_width="0dp"
-android:layout_height="wrap_content"
-android:layout_marginTop="16dp"
-android:text="@string/my_appointments"
-android:paddingVertical="12dp"
-app:layout_constraintTop_toBottomOf="@+id/btnBookAppointment"
-app:layout_constraintStart_toStartOf="@+id/btnBookAppointment"
-app:layout_constraintEnd_toEndOf="@+id/btnBookAppointment"
-app:layout_constraintBottom_toTopOf="@+id/btnFindNextSlots"/>
+    <Button
+        android:id="@+id/btnMyBookings"
+        style="?attr/materialButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/my_appointments"
+        android:paddingVertical="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnBookAppointment"
+        app:layout_constraintStart_toStartOf="@+id/btnBookAppointment"
+        app:layout_constraintEnd_toEndOf="@+id/btnBookAppointment"
+        app:layout_constraintBottom_toTopOf="@+id/btnFindNextSlots"/>
 
-<Button
-android:id="@+id/btnFindNextSlots"
-style="?attr/materialButtonOutlinedStyle"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    android:text="Legközelebbi Szabad Időpontok"
-    android:paddingVertical="12dp"
-    app:layout_constraintTop_toBottomOf="@+id/btnMyBookings"
-    app:layout_constraintStart_toStartOf="@+id/btnMyBookings"
-    app:layout_constraintEnd_toEndOf="@+id/btnMyBookings"
-    app:layout_constraintBottom_toTopOf="@+id/tvNextAvailableSlotsResult"/>
+    <Button
+        android:id="@+id/btnFindNextSlots"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Legközelebbi Szabad Időpontok"
+        android:paddingVertical="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnMyBookings"
+        app:layout_constraintStart_toStartOf="@+id/btnMyBookings"
+        app:layout_constraintEnd_toEndOf="@+id/btnMyBookings"
+        app:layout_constraintBottom_toTopOf="@+id/btnAdminPanel"/>
 
-<TextView
-android:id="@+id/tvNextAvailableSlotsResult"
-android:layout_width="0dp"
-android:layout_height="wrap_content"
-android:layout_marginTop="24dp"
-android:textAlignment="center"
-android:textColor="?attr/colorOnSurfaceVariant"
-    android:textSize="14sp"
+    <!-- ÚJ ADMIN PANEL GOMB -->
+    <Button
+        android:id="@+id/btnAdminPanel"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Admin Panel"
+        android:paddingVertical="12dp"
+        android:visibility="gone"
     app:layout_constraintTop_toBottomOf="@+id/btnFindNextSlots"
     app:layout_constraintStart_toStartOf="@+id/btnFindNextSlots"
     app:layout_constraintEnd_toEndOf="@+id/btnFindNextSlots"
+    app:layout_constraintBottom_toTopOf="@+id/tvNextAvailableSlotsResult"/>
+
+    <TextView
+        android:id="@+id/tvNextAvailableSlotsResult"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="24dp"
+    android:textAlignment="center"
+    android:textColor="?attr/colorOnSurfaceVariant"
+    android:textSize="14sp"
+    app:layout_constraintTop_toBottomOf="@+id/btnAdminPanel"
+    app:layout_constraintStart_toStartOf="@+id/btnAdminPanel"
+    app:layout_constraintEnd_toEndOf="@+id/btnAdminPanel"
     app:layout_constraintBottom_toTopOf="@+id/btnLogout"
     tools:text="Itt jelennek meg a szabad időpontok..." />
 
-<Button
-android:id="@+id/btnLogout"
+    <Button
+        android:id="@+id/btnLogout"
 
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -90,17 +113,5 @@ android:id="@+id/btnLogout"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     android:layout_marginBottom="32dp" />
-
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbarHome"
-
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        app:title="@string/home_title"
-        app:titleCentered="true"
-        app:titleTextColor="?attr/colorOnSurface"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="80dp"
-        tools:ignore="MissingConstraints" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

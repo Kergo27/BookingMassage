@@ -3,21 +3,28 @@ package com.example.bookingmassage; // Ellenőrizd a csomagnevet!
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View; // Szükséges lehet, ha OnClickListener-t implementálsz az osztály szintjén
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull; // Szükséges a Task<QuerySnapshot> @NonNull-hez
 import androidx.appcompat.app.AppCompatActivity;
 // Szükséges lehet, ha MaterialToolbart használsz action barként
 import androidx.appcompat.widget.Toolbar;
 import com.google.android.material.appbar.MaterialToolbar;
 
+import com.example.bookingmassage.TimeSlot; // A modell importja (módosítottam a csomagnevet a konzisztencia érdekében)
+import com.example.bookingmassage.FirebaseHelper; // FirebaseHelper importja
+import com.example.bookingmassage.NotificationHelper; // NotificationHelper importja
 
-import com.example.bookingmassage.TimeSlot; // Szükséges a TimeSlot-hoz
-import com.example.bookingmassage.FirebaseHelper;
-import com.example.bookingmassage.NotificationHelper; // Ha használod
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+
 
 import java.util.List;
 
@@ -29,27 +36,33 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
     private FirebaseHelper firebaseHelper;
-    private NotificationHelper notificationHelper; // Ha használtad az értesítésekhez
+    private NotificationHelper notificationHelper;
 
     // UI Elemek
     private Button btnBookAppointment;
     private Button btnMyBookings;
     private Button btnLogout;
     private Button btnFindNextSlots;
-    private TextView tvNextAvailableSlotsResult; // Az eredmények megjelenítéséhez (ha nem csak értesítés van)
-    // private MaterialToolbar toolbarHome; // Ha van MaterialToolbar az XML-ben, és kezelni akarod
+    private TextView tvNextAvailableSlotsResult;
+    private Button btnAdminPanel; // ÚJ: Admin panel gomb
+
+    // Callback interfész az admin ellenőrzéshez
+    public interface OnAdminCheckCompleteListener {
+        void onResult(boolean isAdmin);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_homepage); // Győződj meg róla, hogy ez a layout fájl neve
+        // Győződj meg róla, hogy a layout neve helyes és tartalmazza az összes gombot
+        setContentView(R.layout.activity_homepage); // Az előző kérésben activity_homepage volt, most activity_home
         Log.d(TAG, "onCreate elindult.");
 
         // Firebase inicializálás
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
-        firebaseHelper = new FirebaseHelper(); // Ennek Firestore logikát kell tartalmaznia
-        notificationHelper = new NotificationHelper(this); // Ha értesítéseket használsz
+        firebaseHelper = new FirebaseHelper();
+        notificationHelper = new NotificationHelper(this);
 
         // Felhasználó ellenőrzése
         if (currentUser == null) {
@@ -57,41 +70,42 @@ public class HomeActivity extends AppCompatActivity {
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            finish(); // Fontos, hogy a HomeActivity ne maradjon a back stack-ben
-            return; // Kilépünk az onCreate-ből, ha nincs felhasználó
+            finish();
+            return;
         }
-        Log.d(TAG, "Bejelentkezett felhasználó: " + currentUser.getEmail());
+        Log.d(TAG, "Bejelentkezett felhasználó: " + currentUser.getEmail() + " (UID: " + currentUser.getUid() + ")");
 
         // UI Elemek inicializálása
-        // toolbarHome = findViewById(R.id.toolbarHome); // Ha van toolbarod az XML-ben
-        // if (toolbarHome != null) {
-        //    setSupportActionBar(toolbarHome);
-        //    getSupportActionBar().setTitle("Főoldal"); // Vagy @string/home_title
-        // }
-
         btnBookAppointment = findViewById(R.id.btnBookAppointment);
         btnMyBookings = findViewById(R.id.btnMyBookings);
         btnLogout = findViewById(R.id.btnLogout);
         btnFindNextSlots = findViewById(R.id.btnFindNextSlots);
-        tvNextAvailableSlotsResult = findViewById(R.id.tvNextAvailableSlotsResult); // Ha van ilyen TextView az XML-ben
+        tvNextAvailableSlotsResult = findViewById(R.id.tvNextAvailableSlotsResult);
+        btnAdminPanel = findViewById(R.id.btnAdminPanel); // Admin gomb inicializálása
 
-        // Null ellenőrzés a kritikus UI elemekre (opcionális, de jó gyakorlat)
+        // Null ellenőrzések (opcionális, de hasznos)
         if (btnBookAppointment == null || btnMyBookings == null || btnLogout == null || btnFindNextSlots == null) {
-            Log.e(TAG, "Hiba: Egy vagy több fő gomb (btnBookAppointment, btnMyBookings, btnLogout, btnFindNextSlots) nem található az activity_home.xml-ben!");
-            Toast.makeText(this, "Hiba a felület elemeinek betöltésekor.", Toast.LENGTH_LONG).show();
-            // Itt dönthetsz úgy, hogy az app nem működőképes, és finish()-t hívsz, vagy csak logolsz.
+            Log.e(TAG, "Hiba: Egy vagy több fő gomb nem található az activity_home.xml-ben!");
         }
-        if (tvNextAvailableSlotsResult == null && notificationHelper == null) {
-            Log.w(TAG, "Figyelmeztetés: tvNextAvailableSlotsResult TextView és notificationHelper is null. Az eredmények nem fognak megjelenni.");
+        if (btnAdminPanel == null) {
+            Log.e(TAG, "HIBA: btnAdminPanel nem található az activity_home.xml-ben!");
         }
 
+        // Admin gomb alapértelmezett elrejtése és listener beállítása
+        if (btnAdminPanel != null) {
+            btnAdminPanel.setVisibility(View.GONE); // Alapból rejtett
+            btnAdminPanel.setOnClickListener(v -> {
+                Log.d(TAG, "Admin Panel gomb megnyomva.");
+                startActivity(new Intent(HomeActivity.this, AdminPanelActivity.class));
+            });
+        }
 
-        // IDEIGLENES: Időpontok generálása (ha még nem történt meg Firestore-ba)
-        // FIGYELEM: EZT CSAK EGYSZER FUTTASD AZ ADATBÁZIS FELTÖLTÉSÉHEZ!
-        // MIUTÁN LEFUTOTT ÉS LÁTOD AZ ADATOKAT A FIREBASE KONZOLBAN, KOMMENTELD KI VAGY TÖRÖLD!
-        // ---------------------------------------------------------------------------
-        // firebaseHelper.generateTimeSlotsForMonths(1); // Pl. 1 hónapra
-        // ---------------------------------------------------------------------------
+        // Admin státusz ellenőrzése és a UI frissítése
+        checkIfUserIsAdminAndSetupUI(currentUser);
+
+
+        // IDEIGLENES: Időpontok generálása
+        // firebaseHelper.generateTimeSlotsForMonths(1); // KOMMENTELD KI HASZNÁLAT UTÁN
 
 
         // Gomb Listenerek Beállítása
@@ -112,70 +126,55 @@ public class HomeActivity extends AppCompatActivity {
         if (btnLogout != null) {
             btnLogout.setOnClickListener(v -> {
                 Log.d(TAG, "Kijelentkezés gomb megnyomva.");
-                mAuth.signOut(); // Firebase kijelentkezés
-                // Opcionálisan: Google Sign-Out, ha azt is használtad
-                // if (googleSignInClient != null) {
-                //     googleSignInClient.signOut().addOnCompleteListener(this, task -> {
-                //         Log.d(TAG, "Google felhasználó kijelentkeztetve.");
-                //     });
-                // }
+                mAuth.signOut();
                 Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Törli a back stack-et
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
-                finish(); // Bezárja a HomeActivity-t
+                finish();
             });
         }
 
-        // "Legközelebbi Szabad Időpont Keresése" gomb listener
         if (btnFindNextSlots != null) {
             btnFindNextSlots.setOnClickListener(v -> {
                 Log.d(TAG, "Legközelebbi szabad időpontok keresése gomb megnyomva.");
                 if (tvNextAvailableSlotsResult != null) {
-                    tvNextAvailableSlotsResult.setText("Keresés folyamatban..."); // Visszajelzés a UI-n
+                    tvNextAvailableSlotsResult.setText("Keresés folyamatban...");
                 } else {
                     Toast.makeText(this, "Keresés folyamatban...", Toast.LENGTH_SHORT).show();
                 }
 
-
-                // Mai naptól kezdve az első 3 szabad időpont lekérése (vagy amennyit szeretnél)
                 firebaseHelper.getNextXAvailableTimeSlots(null, 3, new FirebaseHelper.OnTimeSlotsLoadedListener() {
                     @Override
                     public void onLoaded(List<TimeSlot> timeSlots) {
                         if (timeSlots.isEmpty()) {
-                            Log.i(TAG, "Nincsenek elérhető szabad időpontok a közeljövőben.");
+                            Log.i(TAG, "Nincsenek elérhető szabad időpontok.");
                             if (tvNextAvailableSlotsResult != null) {
                                 tvNextAvailableSlotsResult.setText("Nincsenek közeli szabad időpontok.");
                             }
-                            if (notificationHelper != null) {
-                                notificationHelper.showAvailableSlotsNotification(
-                                        "Szabad Időpontok",
-                                        "Jelenleg nincsenek közeli szabad időpontok.",
-                                        0 // Notification ID offset
-                                );
-                            }
+                            notificationHelper.showAvailableSlotsNotification(
+                                    "Szabad Időpontok",
+                                    "Jelenleg nincsenek közeli szabad időpontok.",
+                                    0
+                            );
                         } else {
-                            Log.i(TAG, "Talált szabad időpontok (" + timeSlots.size() + " db):");
+                            Log.i(TAG, "Talált szabad időpontok (" + timeSlots.size() + " db).");
                             StringBuilder resultText = new StringBuilder("Legközelebbi szabadok:\n");
                             for (int i = 0; i < timeSlots.size(); i++) {
                                 TimeSlot slot = timeSlots.get(i);
-                                Log.d(TAG, " - " + slot.getDate() + " " + slot.getTime());
                                 resultText.append(slot.getDate()).append(" ").append(slot.getTime());
                                 if (i < timeSlots.size() - 1) {
                                     resultText.append("\n");
                                 }
                             }
-
                             if (tvNextAvailableSlotsResult != null) {
                                 tvNextAvailableSlotsResult.setText(resultText.toString());
                             }
-                            if (notificationHelper != null) {
-                                notificationHelper.showAvailableSlotsNotificationWithBigText(
-                                        "Talált Szabad Időpontok!",
-                                        "Legközelebbi szabadok:", // Rövid tartalom
-                                        resultText.toString(),    // Hosszú tartalom (BigTextStyle)
-                                        1 // Notification ID offset
-                                );
-                            }
+                            notificationHelper.showAvailableSlotsNotificationWithBigText(
+                                    "Talált Szabad Időpontok!",
+                                    "Legközelebbi szabadok:",
+                                    resultText.toString(),
+                                    1
+                            );
                         }
                     }
 
@@ -185,33 +184,81 @@ public class HomeActivity extends AppCompatActivity {
                         if (tvNextAvailableSlotsResult != null) {
                             tvNextAvailableSlotsResult.setText("Hiba az időpontok keresésekor.");
                         }
-                        if (notificationHelper != null) {
-                            notificationHelper.showAvailableSlotsNotification(
-                                    "Hiba történt",
-                                    "Nem sikerült lekérdezni a szabad időpontokat.",
-                                    2 // Notification ID offset
-                            );
-                        }
-                        Toast.makeText(HomeActivity.this, "Hiba az időpontok keresésekor: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        notificationHelper.showAvailableSlotsNotification(
+                                "Hiba történt",
+                                "Nem sikerült lekérdezni a szabad időpontokat.",
+                                2
+                        );
+                        Toast.makeText(HomeActivity.this, "Hiba: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
             });
         }
     }
 
+    private void checkIfUserIsAdmin(FirebaseUser user, final OnAdminCheckCompleteListener listener) {
+        if (user == null) {
+            Log.w(TAG, "checkIfUserIsAdmin: user null, nem lehet ellenőrizni.");
+            if (listener != null) listener.onResult(false);
+            return;
+        }
+        String userUid = user.getUid();
+        Log.d(TAG, "Admin státusz ellenőrzése a felhasználóhoz: " + userUid);
+
+        FirebaseFirestore.getInstance().collection("admins").document(userUid).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() { // Explicit típusmegadás
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document != null && document.exists()) {
+                                Log.i(TAG, "Admin ellenőrzés: Felhasználó (" + userUid + ") admin (dokumentum létezik).");
+                                if (listener != null) listener.onResult(true);
+                            } else {
+                                Log.i(TAG, "Admin ellenőrzés: Felhasználó (" + userUid + ") NEM admin (nincs dokumentum).");
+                                if (listener != null) listener.onResult(false);
+                            }
+                        } else {
+                            Log.e(TAG, "Hiba az admin státusz Firestore lekérdezésekor: ", task.getException());
+                            if (listener != null) listener.onResult(false);
+                        }
+                    }
+                });
+    }
+
+    private void checkIfUserIsAdminAndSetupUI(FirebaseUser user) {
+        if (btnAdminPanel == null) {
+            Log.w(TAG, "checkIfUserIsAdminAndSetupUI: btnAdminPanel null, nem lehet beállítani a láthatóságot.");
+            return;
+        }
+        checkIfUserIsAdmin(user, isAdmin -> {
+            if (isAdmin) {
+                Log.i(TAG, "Felhasználó admin, admin panel gomb MEGJELENÍTÉSE.");
+                btnAdminPanel.setVisibility(View.VISIBLE);
+            } else {
+                Log.i(TAG, "Felhasználó NEM admin, admin panel gomb REJTVE MARAD.");
+                btnAdminPanel.setVisibility(View.GONE);
+            }
+        });
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "onStart meghívva.");
-        // Ellenőrizzük újra a felhasználót, ha esetleg valamiért null lett az onCreate után
-        // (pl. ha a LoginActivity nem zárta be magát, és visszanavigáltunk ide)
         currentUser = mAuth.getCurrentUser();
-        if (currentUser == null && !isFinishing()) { // Ha nincs user és az activity még nem fejeződik be
+        if (currentUser == null && !isFinishing()) {
             Log.w(TAG, "onStart: Nincs bejelentkezett felhasználó, átirányítás a LoginActivity-re.");
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
+        } else if (currentUser != null) {
+            // Ha a felhasználó be van jelentkezve, újra ellenőrizzük az admin státuszt,
+            // hátha az onCreate-ben valamiért nem futott le helyesen vagy az adatok változtak.
+            // De ez csak akkor kell, ha az admin státusz dinamikusan változhat az app futása közben.
+            // Egyszeri ellenőrzés az onCreate-ben általában elég.
+            // checkIfUserIsAdminAndSetupUI(currentUser); // Ezt csak akkor, ha szükséges az onStart-ban is frissíteni
         }
     }
 

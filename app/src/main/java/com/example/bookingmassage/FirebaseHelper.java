@@ -267,4 +267,110 @@ public class FirebaseHelper {
                     if (listener != null) listener.onFailure(e);
                 });
     }
+    public void generateTimeSlotsForTargetMonth(Calendar targetMonthStartCalendar, final OnOperationCompleteListener completionListener) {
+        Log.i(TAG, "Firestore: generateTimeSlotsForTargetMonth elindult: " + targetMonthStartCalendar.getTime().toString());
+
+        Calendar calendar = (Calendar) targetMonthStartCalendar.clone(); // A célhónap első napjával kezdünk
+        calendar.set(Calendar.DAY_OF_MONTH, 1); // Biztosítjuk, hogy a hónap első napja legyen
+
+        Calendar endDateCalendar = (Calendar) calendar.clone();
+        endDateCalendar.add(Calendar.MONTH, 1); // A következő hónap első napjáig generálunk
+
+        // ... (a többi logika ugyanaz, mint a generateTimeSlotsForMonths-ban,
+        //      de a 'calendar' a targetMonthStartCalendar-ból indul) ...
+
+        // A batch.commit() végén a completionListener-t kellene hívni
+        // if (slotsInBatch > 0) {
+        //     batch.commit()
+        //             .addOnSuccessListener(aVoid -> {
+        //                 Log.i(TAG, "Firestore: Célhónap időpont generálása (utolsó batch) befejeződött.");
+        //                 if (completionListener != null) completionListener.onSuccess();
+        //             })
+        //             .addOnFailureListener(e -> {
+        //                 Log.e(TAG, "Firestore: Hiba a célhónap időpont generálása (utolsó batch) során.", e);
+        //                 if (completionListener != null) completionListener.onFailure(e);
+        //             });
+        // } else {
+        //      Log.i(TAG, "Firestore: Célhónap időpont generálás befejeződött (nem volt utolsó batch).");
+        //      if (completionListener != null) completionListener.onSuccess(); // Vagy itt is jelezhetjük a sikert
+        // }
+    }
+
+    public void generateSlotsForDateRange(Calendar startDateCalendar, int numberOfWeeks, final OnOperationCompleteListener listener) {
+        Log.i(TAG, "Firestore: generateSlotsForDateRange elindult. Kezdődátum: " +
+                new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(startDateCalendar.getTime()) +
+                ", Hetek száma: " + numberOfWeeks);
+
+        if (numberOfWeeks <= 0) {
+            Log.w(TAG, "A hetek száma pozitív kell legyen.");
+            if (listener != null) listener.onFailure(new IllegalArgumentException("A hetek száma pozitív kell legyen."));
+            return;
+        }
+
+        Calendar calendar = (Calendar) startDateCalendar.clone(); // A megadott kezdődátummal indulunk
+        Calendar endDateCalendar = (Calendar) startDateCalendar.clone();
+        endDateCalendar.add(Calendar.WEEK_OF_YEAR, numberOfWeeks); // Hozzáadjuk a generálandó hetek számát
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+
+        WriteBatch batch = db.batch();
+        int slotsInBatch = 0;
+        final int MAX_BATCH_SIZE = 490;
+        int generatedCount = 0;
+
+        while (calendar.before(endDateCalendar)) {
+            int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+            if (dayOfWeek >= Calendar.MONDAY && dayOfWeek <= Calendar.FRIDAY) { // Csak hétköznapokra
+                String currentDate = dateFormat.format(calendar.getTime());
+                for (int hour = 8; hour < 18; hour++) { // 8:00-tól 17:00-ig
+                    Calendar slotCalendar = (Calendar) calendar.clone();
+                    slotCalendar.set(Calendar.HOUR_OF_DAY, hour);
+                    slotCalendar.set(Calendar.MINUTE, 0);
+                    String currentTime = timeFormat.format(slotCalendar.getTime());
+                    String slotId = currentDate + "_" + currentTime.replace(":", "");
+
+                    TimeSlot newSlot = new TimeSlot(slotId, currentDate, currentTime);
+                    DocumentReference slotDocRef = db.collection(TIMESLOTS_COLLECTION).document(slotId);
+                    batch.set(slotDocRef, newSlot);
+                    slotsInBatch++;
+                    generatedCount++;
+
+                    if (slotsInBatch >= MAX_BATCH_SIZE) {
+                        Log.d(TAG, "Firestore: Batch (" + slotsInBatch + ") commitolása a generálás során...");
+                        batch.commit().addOnSuccessListener(aVoid -> Log.i(TAG, "Firestore: Időpontok egy adagja sikeresen mentve."))
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Firestore: Hiba az időpontok egy adagjának mentésekor.", e);
+                                    if (listener != null) listener.onFailure(e); // Korai hiba jelzése
+                                    // Itt meg kellene szakítani a további batch-ek feldolgozását, ha hiba van.
+                                });
+                        batch = db.batch(); // Új batch
+                        slotsInBatch = 0;
+                    }
+                }
+            }
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        if (slotsInBatch > 0) {
+            Log.d(TAG, "Firestore: Utolsó batch (" + slotsInBatch + " elem) commitolása a generálás során.");
+            int finalGeneratedCount = generatedCount;
+            batch.commit()
+                    .addOnSuccessListener(aVoid -> {
+                        Log.i(TAG, "Firestore: Időpont generálás (utolsó batch) sikeresen befejeződött. Összesen generált: " + finalGeneratedCount);
+                        if (listener != null) listener.onSuccess();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Firestore: Hiba az időpont generálás (utolsó batch) során.", e);
+                        if (listener != null) listener.onFailure(e);
+                    });
+        } else if (generatedCount > 0) { // Ha volt generálás, de az utolsó batch üres volt (mert pont a limitnél fejeződött be)
+            Log.i(TAG, "Firestore: Időpont generálás sikeresen befejeződött. Összesen generált: " + generatedCount);
+            if (listener != null) listener.onSuccess();
+        } else {
+            Log.i(TAG, "Firestore: Nem történt időpont generálás (valószínűleg a ciklus nem futott le, vagy nem volt commitolandó batch).");
+            if (listener != null) listener.onSuccess(); // Vagy onFailure, ha ez hibának számít
+        }
+    }
+
 }

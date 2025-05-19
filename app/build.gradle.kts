@@ -58,7 +58,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(libs.work.runtime.ktx)
-
+    implementation(libs.guava)
 
 
 }

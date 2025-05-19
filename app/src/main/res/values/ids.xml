@@ -35,4 +35,13 @@
     <item name="btnBackEditAppointment" type="id" />
     <item name="progressBarEdit" type="id" />
     <item name="tvEditAppointmentTitle" type="id" />
+    <item name="tilAdminWeeksToGenerate" type="id" />
+    <item name="progressBarAdmin" type="id" />
+    <item name="btnAdminGenerateSlots" type="id" />
+    <item name="appBarLayoutAdmin" type="id" />
+    <item name="toolbarAdmin" type="id" />
+    <item name="tvAdminInstruction" type="id" />
+    <item name="btnAdminPickStartDate" type="id" />
+    <item name="tvAdminSelectedStartDate" type="id" />
+    <item name="etAdminWeeksToGenerate" type="id" />
 </resources>
