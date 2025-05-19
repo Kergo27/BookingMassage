@@ -1,19 +1,20 @@
 package com.example.bookingmassage; // Ellenőrizd a csomagnevet
 
-import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem; // FONTOS IMPORT a vissza gomb kezeléséhez
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull; // FONTOS IMPORT a MenuItem-hez
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.bookingmassage.FirebaseHelper;
-import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.appbar.MaterialToolbar; // Győződj meg róla, hogy ez az import megvan
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.text.SimpleDateFormat;
@@ -28,23 +29,23 @@ public class AdminPanelActivity extends AppCompatActivity {
     private TextInputLayout tilAdminWeeksToGenerate;
     private TextInputEditText etAdminWeeksToGenerate;
     private ProgressBar progressBarAdmin;
-    private MaterialToolbar toolbarAdmin;
+    private MaterialToolbar toolbarAdmin; // Toolbar referencia
 
     private FirebaseHelper firebaseHelper;
     private Calendar selectedStartDateCalendar;
     private SimpleDateFormat dateFormatForDisplay = new SimpleDateFormat("yyyy. MMMM dd. (EEEE)", new Locale("hu", "HU"));
-    private SimpleDateFormat dateFormatForFirebase = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    // private SimpleDateFormat dateFormatForFirebase = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()); // Ezt a FirebaseHelper használja
 
-    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin_panel);
+        setContentView(R.layout.activity_admin_panel); // Győződj meg róla, hogy a layout neve helyes
 
         firebaseHelper = new FirebaseHelper();
-        selectedStartDateCalendar = Calendar.getInstance(); // Alapból mai nap
+        selectedStartDateCalendar = Calendar.getInstance();
 
-        toolbarAdmin = findViewById(R.id.toolbarAdmin);
+        // UI Elemek inicializálása
+        toolbarAdmin = findViewById(R.id.toolbarAdmin); // Toolbar inicializálása
         btnAdminPickStartDate = findViewById(R.id.btnAdminPickStartDate);
         tvAdminSelectedStartDate = findViewById(R.id.tvAdminSelectedStartDate);
         tilAdminWeeksToGenerate = findViewById(R.id.tilAdminWeeksToGenerate);
@@ -52,21 +53,34 @@ public class AdminPanelActivity extends AppCompatActivity {
         btnAdminGenerateSlots = findViewById(R.id.btnAdminGenerateSlots);
         progressBarAdmin = findViewById(R.id.progressBarAdmin);
 
+        // Toolbar beállítása Action Barként
         setSupportActionBar(toolbarAdmin);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Vissza gomb (nyíl) megjelenítése
+            getSupportActionBar().setDisplayShowHomeEnabled(true); // Vissza gomb engedélyezése
+            // getSupportActionBar().setTitle("Admin Panel"); // Cím beállítása, ha az XML-ben nincs, vagy felül akarod írni
         }
-        toolbarAdmin.setNavigationOnClickListener(v -> onBackPressed());
+        // A Toolbar címét az XML-ben (app:title) is beállíthatod, ahogy korábban tettük.
 
         updateSelectedDateDisplay();
 
         btnAdminPickStartDate.setOnClickListener(v -> showDatePickerDialog());
-
         btnAdminGenerateSlots.setOnClickListener(v -> generateSlots());
     }
 
+    // Vissza gomb kezelése a Toolbaron
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        // Az android.R.id.home az alapértelmezett ID a Toolbar "home" (vissza) gombjához
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed(); // Ugyanazt csinálja, mint a rendszer vissza gombja
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void showDatePickerDialog() {
+        // ... (a DatePickerDialog kódja változatlan)
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
                 (view, year, month, dayOfMonth) -> {
                     selectedStartDateCalendar.set(year, month, dayOfMonth);
@@ -79,10 +93,12 @@ public class AdminPanelActivity extends AppCompatActivity {
     }
 
     private void updateSelectedDateDisplay() {
+        // ... (a kód változatlan)
         tvAdminSelectedStartDate.setText("Kiválasztott kezdőnap: " + dateFormatForDisplay.format(selectedStartDateCalendar.getTime()));
     }
 
     private void generateSlots() {
+        // ... (a generáló logika kódja változatlan)
         String weeksStr = etAdminWeeksToGenerate.getText() != null ? etAdminWeeksToGenerate.getText().toString() : "";
         if (TextUtils.isEmpty(weeksStr)) {
             tilAdminWeeksToGenerate.setError("Add meg a hetek számát!");
@@ -91,7 +107,7 @@ public class AdminPanelActivity extends AppCompatActivity {
         int weeksToGenerate;
         try {
             weeksToGenerate = Integer.parseInt(weeksStr);
-            if (weeksToGenerate <= 0 || weeksToGenerate > 52) { // Ésszerű korlátok
+            if (weeksToGenerate <= 0 || weeksToGenerate > 52) {
                 tilAdminWeeksToGenerate.setError("A hetek száma 1 és 52 között legyen!");
                 return;
             }
@@ -99,43 +115,20 @@ public class AdminPanelActivity extends AppCompatActivity {
             tilAdminWeeksToGenerate.setError("Hibás számformátum!");
             return;
         }
-        tilAdminWeeksToGenerate.setError(null); // Hiba törlése
+        tilAdminWeeksToGenerate.setError(null);
 
-        Log.i(TAG, "Generálás indítása: " + dateFormatForFirebase.format(selectedStartDateCalendar.getTime()) +
+        Log.i(TAG, "Generálás indítása: " +
+                new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedStartDateCalendar.getTime()) +
                 " naptól, " + weeksToGenerate + " hétre.");
         progressBarAdmin.setVisibility(View.VISIBLE);
         btnAdminGenerateSlots.setEnabled(false);
 
-        // A FirebaseHelper-ben lévő generáló metódust kellene itt hívni,
-        // ami fogad egy kezdődátumot és a napok/hetek számát.
-        // Például: firebaseHelper.generateTimeSlotsForPeriod(selectedStartDateCalendar, weeksToGenerate * 7, new FirebaseHelper.OnOperationCompleteListener() { ... });
-        // Most egy módosított generateTimeSlotsForMonths-t szimulálunk:
-        // Ezt a részt a FirebaseHelper-ben kell megfelelően implementálni!
-        // Most csak logoljuk, és egy Toast-ot jelenítünk meg.
-        // Tegyük fel, hogy a FirebaseHelpernek van egy ilyen metódusa:
-        // firebaseHelper.generateSlotsForDateRange(selectedStartDateCalendar, weeksToGenerate, new FirebaseHelper.OnOperationCompleteListener() {
-        // Itt a generateTimeSlotsForMonths-t hívjuk, de a valóságban ezt át kellene írni,
-        // hogy a selectedStartDateCalendar-tól kezdjen!
-        // Mivel a generateTimeSlotsForMonths mostani verziója a mai naptól számol X hónapot,
-        // ez nem lesz pontos az admin panelhez.
-
-        // ----- ÁTMENETI MEGOLDÁS A BEMUTATÁSHOZ (Ezt kellene lecserélni egy paraméterezett generálóra) -----
-        int monthsToGenerate = (weeksToGenerate + 3) / 4; // Nagyjából hónapokra átszámolva
-        if (monthsToGenerate == 0) monthsToGenerate = 1;
-        final int finalMonths = monthsToGenerate;
-
-        // Ideiglenesen: Azt a logikát, ami a FirebaseHelper.generateTimeSlotsForMonths-ban van,
-        // át kellene alakítani, hogy egy Calendar objektumot (selectedStartDateCalendar) és
-        // a generálandó napok számát (weeksToGenerate * 7) fogadja.
-        // Mivel ez bonyolultabb, most csak egy üzenetet jelenítünk meg.
-
-        // Tegyük fel, hogy van egy generateSlotsForDateRange a FirebaseHelperben:
         firebaseHelper.generateSlotsForDateRange(selectedStartDateCalendar, weeksToGenerate, new FirebaseHelper.OnOperationCompleteListener() {
             @Override
             public void onSuccess() {
                 progressBarAdmin.setVisibility(View.GONE);
                 btnAdminGenerateSlots.setEnabled(true);
-                Toast.makeText(AdminPanelActivity.this, weeksToGenerate + " hétnyi időpont generálása sikeresen elindítva/befejezve.", Toast.LENGTH_LONG).show();
+                Toast.makeText(AdminPanelActivity.this, weeksToGenerate + " hétnyi időpont sikeresen generálva/elindítva.", Toast.LENGTH_LONG).show();
                 Log.i(TAG, "Időpont generálás (callback): Siker.");
             }
 
@@ -147,6 +140,5 @@ public class AdminPanelActivity extends AppCompatActivity {
                 Log.e(TAG, "Időpont generálás (callback): Hiba.", e);
             }
         });
-        // ----- ÁTMENETI MEGOLDÁS VÉGE -----
     }
 }
