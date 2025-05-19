@@ -5,127 +5,113 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@drawable/background_gradient"
+    android:background="?attr/colorSurfaceContainerLowest"
     tools:context=".BookingActivity">
 
-    <!-- Vissza Gomb -->
-    <ImageButton
-        android:id="@+id/btnBackBooking"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8mm"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Vissza"
-        android:src="?attr/homeAsUpIndicator"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/white"
-        tools:ignore="TouchTargetSizeCheck" />
+    <!-- AppBarLayout a Toolbarhoz (fejléc) -->
+<com.google.android.material.appbar.AppBarLayout
+android:id="@+id/appBarLayoutBooking"
+android:layout_width="0dp"
+android:layout_height="wrap_content"
+app:layout_constraintTop_toTopOf="parent"
+app:layout_constraintStart_toStartOf="parent"
+app:layout_constraintEnd_toEndOf="parent"
+android:background="?attr/colorSurface"
+app:elevation="0dp">
 
-    <!-- Konténer a lejjebb tolt tartalomnak -->
+<com.google.android.material.appbar.MaterialToolbar
+    android:id="@+id/toolbarBooking"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    app:title="Időpont Foglalás"
+app:navigationIcon="?attr/homeAsUpIndicator"
+app:titleCentered="true"
+app:titleTextColor="?attr/colorOnSurface" />
+</com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:id="@+id/tvBookingTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="58dp"
-        android:text="Időpont Foglalás"
-        android:textAlignment="center"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="6mm"
-        app:layout_constraintBottom_toTopOf="@+id/contentContainerBooking"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/btnBackBooking"
-        app:layout_constraintTop_toTopOf="@+id/btnBackBooking"
-        app:layout_constraintVertical_bias="0.0" />
+    <!-- Dátumválasztó Szekció -->
+<TextView
+android:id="@+id/tvSelectedDateLabel"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginStart="16dp"
+android:layout_marginTop="16dp"
+    android:text="Kiválasztott nap:"
+    android:textColor="?attr/colorOnSurfaceVariant"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/appBarLayoutBooking" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/contentContainerBooking"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="10mm"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnBackBooking">
+<TextView
+android:id="@+id/tvSelectedDate"
+android:layout_width="0dp"
+android:layout_height="wrap_content"
+android:layout_marginStart="8dp"
+android:layout_marginEnd="8dp"
+android:textColor="?attr/colorOnSurface"
+android:textSize="18sp"
+android:textStyle="bold"
+app:layout_constraintBaseline_toBaselineOf="@+id/tvSelectedDateLabel"
+app:layout_constraintEnd_toStartOf="@+id/btnPickDate"
+app:layout_constraintStart_toEndOf="@+id/tvSelectedDateLabel"
+tools:text="2025. május 20. (kedd)" />
 
-        <TextView
-            android:id="@+id/tvSelectedDateLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Kiválasztott nap:"
-            android:textColor="@color/white"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+<Button
+android:id="@+id/btnPickDate"
+style="?attr/materialButtonOutlinedStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    android:text="Dátum"
+    app:iconTint="?attr/colorPrimary"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="@+id/tvSelectedDateLabel"
+    app:layout_constraintBottom_toBottomOf="@+id/tvSelectedDate" />
 
-        <TextView
-            android:id="@+id/tvSelectedDate"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/tvSelectedDateLabel"
-            app:layout_constraintEnd_toStartOf="@+id/btnPickDate"
-            app:layout_constraintStart_toEndOf="@+id/tvSelectedDateLabel"
-            app:layout_constraintTop_toTopOf="@+id/tvSelectedDateLabel"
-            tools:text="2025-05-20" />
+    <!-- ProgressBar -->
+<ProgressBar
+android:id="@+id/progressBarBooking"
+style="?android:attr/progressBarStyle"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginTop="16dp"
+android:visibility="gone"
+app:layout_constraintEnd_toEndOf="parent"
+app:layout_constraintStart_toStartOf="parent"
+app:layout_constraintTop_toBottomOf="@+id/btnPickDate"
+tools:visibility="visible" />
 
-        <Button
-            android:id="@+id/btnPickDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/primaryColor"
-            android:text="Dátum"
-            android:textColor="@color/white"
-            app:icon="@android:drawable/ic_menu_my_calendar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <!-- RecyclerView az időpontokhoz -->
+<androidx.recyclerview.widget.RecyclerView
+android:id="@+id/rvTimeSlots"
+android:layout_width="0dp"
+android:layout_height="0dp"
+android:layout_marginTop="8dp"
+android:layout_marginBottom="16dp"
+android:paddingStart="8dp"
+android:paddingEnd="8dp"
+android:clipToPadding="false"
+app:layout_constraintBottom_toBottomOf="parent"
+app:layout_constraintEnd_toEndOf="parent"
+app:layout_constraintStart_toStartOf="parent"
+app:layout_constraintTop_toBottomOf="@+id/progressBarBooking"
+tools:listitem="@layout/item_time_slot" />
 
-        <ProgressBar
-            android:id="@+id/progressBarBooking"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnPickDate"
-            tools:visibility="visible" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvTimeSlots"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/progressBarBooking"
-            tools:listitem="@layout/item_time_slot" />
-
-        <TextView
-            android:id="@+id/tvNoSlotsMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Nincsenek elérhető időpontok ezen a napon, vagy válassz másik napot."
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@+id/rvTimeSlots"
-            app:layout_constraintEnd_toEndOf="@+id/rvTimeSlots"
-            app:layout_constraintStart_toStartOf="@+id/rvTimeSlots"
-            app:layout_constraintTop_toTopOf="@+id/rvTimeSlots"
-            tools:visibility="visible" />
+    <!-- Üzenet, ha nincsenek időpontok -->
+<TextView
+android:id="@+id/tvNoSlotsMessage"
+android:layout_width="0dp"
+android:layout_height="wrap_content"
+android:text="Nincsenek elérhető időpontok ezen a napon, vagy válassz másik napot."
+android:textAlignment="center"
+android:textColor="?attr/colorOnSurfaceVariant"
+android:textSize="16sp"
+android:visibility="gone"
+app:layout_constraintBottom_toBottomOf="@+id/rvTimeSlots"
+app:layout_constraintEnd_toEndOf="@+id/rvTimeSlots"
+app:layout_constraintStart_toStartOf="@+id/rvTimeSlots"
+app:layout_constraintTop_toTopOf="@+id/rvTimeSlots"
+tools:visibility="visible"
+android:layout_marginStart="16dp"
+android:layout_marginEnd="16dp"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>

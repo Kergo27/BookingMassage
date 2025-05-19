@@ -75,5 +75,13 @@
     <color name="md_theme_surfaceContainer">#F3EDF7</color>
     <color name="md_theme_surfaceContainerHigh">#ECE6F0</color>
     <color name="md_theme_surfaceContainerHighest">#E6E0E9</color>
+    <!-- res/values/colors.xml -->
+    <color name="your_radio_button_text_color">?attr/colorOnSurface</color>
+
+
+    <color name="item_time_slot_text_available">#FF008000</color> <!-- Sötétzöld -->
+    <color name="item_time_slot_bg_available">#FFFFFFFF</color> <!-- Fehér (vagy a kártya alapértelmezett színe) -->
+    <color name="item_time_slot_text_booked">#FF888888</color> <!-- Szürke -->
+    <color name="item_time_slot_bg_booked">#FFF0F0F0</color> <!-- Nagyon halvány szürke a kártya hátterének -->
 
 </resources>

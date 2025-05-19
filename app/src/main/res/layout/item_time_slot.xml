@@ -1,38 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/cardViewTimeSlot"
+    android:id="@+id/cardViewTimeSlotItemRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    app:cardElevation="1dp"
+    app:cardCornerRadius="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-    <LinearLayout
-        android:id="@+id/linearLayoutTimeSlot"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp"
-        android:gravity="center">
+<androidx.constraintlayout.widget.ConstraintLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:paddingTop="16dp"
+android:paddingBottom="16dp"
+android:paddingStart="16dp"
+android:paddingEnd="16dp">
 
-        <TextView
-            android:id="@+id/tvTimeSlot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            tools:text="08:00" />
+<TextView
+    android:id="@+id/tvItemTimeSlotTime"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:textAppearance="?attr/textAppearanceTitleLarge"
+android:textColor="?attr/colorOnSurface"
+app:layout_constraintStart_toStartOf="parent"
+app:layout_constraintTop_toTopOf="parent"
+app:layout_constraintBottom_toBottomOf="parent"
+tools:text="10:00" />
 
-        <TextView
-            android:id="@+id/tvSlotStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            tools:text="Szabad" />
+<TextView
+    android:id="@+id/tvItemTimeSlotStatus"
+android:layout_width="0dp"
+android:layout_height="wrap_content"
+android:layout_marginStart="16dp"
+android:textAppearance="?attr/textAppearanceBodyMedium"
+android:textColor="?attr/colorOnSurfaceVariant"
+android:textAlignment="viewEnd"
+app:layout_constraintBaseline_toBaselineOf="@+id/tvItemTimeSlotTime"
+app:layout_constraintStart_toEndOf="@+id/tvItemTimeSlotTime"
+app:layout_constraintEnd_toEndOf="parent"
+tools:text="Szabad" />
 
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>

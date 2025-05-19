@@ -1,50 +1,52 @@
-package com.example.bookingmassage; // Ellenőrizd a csomagnevet!
+package com.example.bookingmassage;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
+// import android.widget.ArrayAdapter; // Már nem kell az AutoCompleteTextView-hez
 import android.widget.Button;
-import android.widget.ImageButton;
+import android.widget.LinearLayout; // Szükséges a RadioButton LayoutParams-hoz
 import android.widget.ProgressBar;
-import android.widget.Spinner;
+import android.widget.RadioGroup; // RadioGroup import
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat; // Színhez
 
-import com.example.bookingmassage.FirebaseHelper; // Győződj meg róla, hogy a csomagnév helyes
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+// FirebaseHelper import (győződj meg róla, hogy a csomagnév helyes)
+import com.example.bookingmassage.FirebaseHelper;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.radiobutton.MaterialRadioButton; // MaterialRadioButton import
+// import com.google.android.material.textfield.TextInputLayout; // Már nem kell
+// import android.widget.AutoCompleteTextView; // Már nem kell
 
-import java.util.Arrays;
-import java.util.Locale; // Szükséges a String.format Locale-jához
 
 public class EditAppointmentActivity extends AppCompatActivity {
 
-    private static final String TAG = "EditAppointmentActivity";
+    private static final String TAG = "EditAppointmentAct";
 
-    // UI Elemek
     private TextView tvCurrentAppointmentDetails;
-    private Spinner spinnerNewMassageType;
+    private RadioGroup radioGroupMassageType; // KICSERÉLVE: AutoCompleteTextView -> RadioGroup
     private Button btnSaveChanges;
-    private ImageButton btnBackEditAppointment;
     private ProgressBar progressBarEdit;
+    private MaterialToolbar toolbarEditAppointment;
 
-    // Firebase és Adat Változók
     private FirebaseHelper firebaseHelper;
-    private FirebaseUser currentUser;
 
-    // Intent-ből kapott adatok tárolására
-    private String receivedAppointmentId;    // Az 'appointments' kollekció dokumentum ID-ja
-    private String receivedUserId;           // A foglalást végző felhasználó ID-ja
-    private String receivedTimeSlotId;       // A 'time_slots' kollekció dokumentum ID-ja (pl. "2025-05-19_0800")
-    private String receivedCurrentMassageType; // A jelenlegi masszázs típus
-    private String receivedDate;             // A foglalás dátuma
-    private String receivedTime;             // A foglalás ideje
+    private String appointmentId;
+    private String timeSlotId;
+    private String currentMassageType;
+    private String appointmentDate;
+    private String appointmentTime;
 
-    private String[] massageTypesArray; // A Spinner tartalmához
+    private String[] massageTypesArray;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,151 +54,187 @@ public class EditAppointmentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_appointment);
         Log.d(TAG, "onCreate elindult.");
 
-        // Firebase inicializálás
         firebaseHelper = new FirebaseHelper();
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (currentUser == null) {
-            Toast.makeText(this, "Hiba: Nincs bejelentkezett felhasználó. Kérjük, jelentkezzen be újra.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-        Log.d(TAG, "Bejelentkezett felhasználó: " + currentUser.getEmail());
-
-        // Adatok átvétele az Intent-ből
-        Intent intent = getIntent();
-        receivedAppointmentId = intent.getStringExtra("APPOINTMENT_ID");
-        receivedUserId = intent.getStringExtra("USER_ID");
-        receivedTimeSlotId = intent.getStringExtra("TIME_SLOT_ID");
-        receivedCurrentMassageType = intent.getStringExtra("CURRENT_MASSAGE_TYPE");
-        receivedDate = intent.getStringExtra("DATE");
-        receivedTime = intent.getStringExtra("TIME");
-
-        // Logoljuk az átvett értékeket alapos ellenőrzéshez
-        Log.i(TAG, "Intent adatok átvéve az EditAppointmentActivity-ben:");
-        Log.i(TAG, "  APPOINTMENT_ID (foglalás ID): " + receivedAppointmentId);
-        Log.i(TAG, "  USER_ID (felhasználó ID): " + receivedUserId);
-        Log.i(TAG, "  TIME_SLOT_ID (idősáv ID, pl. YYYY-MM-DD_HHMM): " + receivedTimeSlotId);
-        Log.i(TAG, "  CURRENT_MASSAGE_TYPE (jelenlegi típus): " + receivedCurrentMassageType);
-        Log.i(TAG, "  DATE (dátum): " + receivedDate);
-        Log.i(TAG, "  TIME (idő): " + receivedTime);
-
-        // Ellenőrizzük, hogy minden szükséges adat megérkezett-e
-        if (receivedAppointmentId == null || receivedUserId == null || receivedTimeSlotId == null ||
-                receivedCurrentMassageType == null || receivedDate == null || receivedTime == null) {
-            Toast.makeText(this, "Hiba: Hiányzó adatok a foglalás módosításához.", Toast.LENGTH_LONG).show();
-            Log.e(TAG, "Egy vagy több kritikus Intent extra hiányzik. Az Activity befejeződik.");
-            finish();
-            return;
-        }
 
         // UI Elemek inicializálása
+        toolbarEditAppointment = findViewById(R.id.toolbarEditAppointment);
         tvCurrentAppointmentDetails = findViewById(R.id.tvCurrentAppointmentDetails);
-        spinnerNewMassageType = findViewById(R.id.spinnerNewMassageType);
+        radioGroupMassageType = findViewById(R.id.radioGroupMassageType); // ÚJ inicializálás
         btnSaveChanges = findViewById(R.id.btnSaveChanges);
-        btnBackEditAppointment = findViewById(R.id.btnBackEditAppointment);
         progressBarEdit = findViewById(R.id.progressBarEdit);
 
-        // Null ellenőrzés a UI elemekre
-        if (tvCurrentAppointmentDetails == null || spinnerNewMassageType == null ||
-                btnSaveChanges == null || btnBackEditAppointment == null || progressBarEdit == null) {
-            Log.e(TAG, "HIBA: Egy vagy több UI elem null a findViewById után! Ellenőrizd az activity_edit_appointment.xml ID-kat.");
-            Toast.makeText(this, "Hiba a szerkesztő felület betöltésekor.", Toast.LENGTH_LONG).show();
+        // Toolbar beállítása
+        if (toolbarEditAppointment != null) {
+            setSupportActionBar(toolbarEditAppointment);
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setDisplayShowHomeEnabled(true);
+            }
+        } else {
+            Log.e(TAG, "HIBA: toolbarEditAppointment nem található!");
+        }
+
+        // Null ellenőrzés a kritikus UI elemekre
+        if (tvCurrentAppointmentDetails == null || radioGroupMassageType == null || btnSaveChanges == null || progressBarEdit == null || toolbarEditAppointment == null) {
+            Log.e(TAG, "HIBA: Egy vagy több UI elem null az EditAppointmentActivity-ben! Ellenőrizd az XML ID-kat.");
+            Toast.makeText(this, "Hiba a szerkesztő felületének betöltésekor.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Jelenlegi foglalás adatainak megjelenítése
-        tvCurrentAppointmentDetails.setText(String.format(Locale.getDefault(), "Időpont: %s %s\nJelenlegi típus: %s",
-                receivedDate, receivedTime, receivedCurrentMassageType));
+        // Intent adatok lekérése
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("APPOINTMENT_ID") && intent.hasExtra("TIME_SLOT_ID")) {
+            appointmentId = intent.getStringExtra("APPOINTMENT_ID");
+            timeSlotId = intent.getStringExtra("TIME_SLOT_ID");
+            currentMassageType = intent.getStringExtra("CURRENT_MASSAGE_TYPE");
+            appointmentDate = intent.getStringExtra("DATE");
+            appointmentTime = intent.getStringExtra("TIME");
 
-        // Spinner beállítása a masszázs típusokkal
-        massageTypesArray = getResources().getStringArray(R.array.services_array);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, massageTypesArray);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerNewMassageType.setAdapter(spinnerAdapter);
+            Log.d(TAG, "Fogadott adatok: AppointmentID=" + appointmentId + ", TimeSlotID=" + timeSlotId +
+                    ", CurrentType=" + currentMassageType + ", Date=" + appointmentDate + ", Time=" + appointmentTime);
 
-        // Előre kiválasztjuk a jelenlegi masszázs típust a Spinnerben
-        int currentTypePosition = -1; // Alapértelmezett, ha nem található
-        if (receivedCurrentMassageType != null) {
-            currentTypePosition = Arrays.asList(massageTypesArray).indexOf(receivedCurrentMassageType);
-        }
-
-        if (currentTypePosition >= 0) {
-            spinnerNewMassageType.setSelection(currentTypePosition);
+            if (TextUtils.isEmpty(appointmentId) || TextUtils.isEmpty(timeSlotId) || TextUtils.isEmpty(currentMassageType)) {
+                Log.e(TAG, "HIBA: Hiányzó vagy üres kritikus adatok az Intentből!");
+                Toast.makeText(this, "Hiba a szerkesztő betöltésekor: Hiányzó adatok.", Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
+            populateUI();
         } else {
-            Log.w(TAG, "A jelenlegi masszázs típus (" + receivedCurrentMassageType + ") nem található a spinner listájában. Az első elem lesz kiválasztva.");
-            if (massageTypesArray.length > 0) {
-                spinnerNewMassageType.setSelection(0); // Első elem kiválasztása, ha a jelenlegi nem található
-            }
+            Log.e(TAG, "HIBA: Nem érkeztek meg a szükséges adatok az Intentben a foglalás szerkesztéséhez!");
+            Toast.makeText(this, "Hiba a szerkesztő betöltésekor: Nincsenek adatok.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        btnSaveChanges.setOnClickListener(v -> saveChanges());
+    }
+
+    private void populateUI() {
+        Log.d(TAG, "populateUI: Adatok megjelenítése és RadioGroup feltöltése.");
+        if (tvCurrentAppointmentDetails != null) {
+            String details = "Időpont: " + (appointmentDate != null ? appointmentDate : "N/A") + " " +
+                    (appointmentTime != null ? appointmentTime : "N/A") + "\n" +
+                    "Jelenlegi típus: " + (currentMassageType != null ? currentMassageType : "N/A");
+            tvCurrentAppointmentDetails.setText(details);
         }
 
-        // Vissza gomb listener
-        btnBackEditAppointment.setOnClickListener(v -> {
-            Log.d(TAG, "Vissza gomb megnyomva az EditAppointmentActivity-ből.");
-            onBackPressed();
-        });
+        massageTypesArray = getResources().getStringArray(R.array.services_array);
+        if (massageTypesArray == null || massageTypesArray.length == 0) {
+            Log.e(TAG, "HIBA: massageTypesArray (R.array.services_array) üres vagy null!");
+            Toast.makeText(this, "Hiba: Masszázs típusok listája nem érhető el.", Toast.LENGTH_LONG).show();
+            if (radioGroupMassageType != null) radioGroupMassageType.setEnabled(false); // Csak akkor, ha nem null
+            return;
+        }
+        Log.d(TAG, "Masszázs típusok betöltve a tömbből, elemszám: " + massageTypesArray.length);
 
-        // Változtatások Mentése gomb listener
-        btnSaveChanges.setOnClickListener(v -> {
-            // Győződjünk meg róla, hogy a spinnernek van kiválasztott eleme
-            if (spinnerNewMassageType.getSelectedItem() == null) {
-                Toast.makeText(EditAppointmentActivity.this, "Kérjük, válasszon masszázs típust.", Toast.LENGTH_SHORT).show();
+        // RadioGroup feltöltése
+        if (radioGroupMassageType != null) {
+            radioGroupMassageType.removeAllViews(); // Esetleges korábbi gombok törlése
+            for (String type : massageTypesArray) {
+                MaterialRadioButton radioButton = new MaterialRadioButton(this);
+                radioButton.setText(type);
+                radioButton.setId(View.generateViewId()); // Dinamikus ID generálása minden rádiógombnak
+
+                // Stílus és térköz beállítása (opcionális, de ajánlott)
+                // radioButton.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+                // A MaterialRadioButton alapból jó stílust használ, a textColor-t a téma adja.
+                // Ha egyedi színt akarsz:
+                // radioButton.setTextColor(ContextCompat.getColor(this, R.color.your_radio_button_text_color));
+
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                // Térköz a rádiógombok között (pl. 8dp)
+                int marginInDp = 8;
+                int marginInPx = (int) (marginInDp * getResources().getDisplayMetrics().density);
+                params.setMargins(0, 0, 0, marginInPx);
+                radioButton.setLayoutParams(params);
+
+                radioGroupMassageType.addView(radioButton);
+
+                // Aktuális típus kiválasztása (bejelölése)
+                if (currentMassageType != null && currentMassageType.equals(type)) {
+                    radioButton.setChecked(true);
+                    Log.d(TAG, "Kezdő masszázs típus bejelölve a RadioButton-on: " + type);
+                }
+            }
+        } else {
+            Log.e(TAG, "populateUI: radioGroupMassageType null!");
+        }
+    }
+
+    private void saveChanges() {
+        if (radioGroupMassageType == null) {
+            Log.e(TAG, "saveChanges: radioGroupMassageType null!");
+            Toast.makeText(this, "Hiba a mentés előkészítésekor.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int selectedRadioButtonId = radioGroupMassageType.getCheckedRadioButtonId();
+        String newSelectedMassageType = "";
+
+        if (selectedRadioButtonId != -1) { // Ellenőrizzük, hogy van-e kiválasztott
+            MaterialRadioButton selectedRadioButton = findViewById(selectedRadioButtonId);
+            if (selectedRadioButton != null) {
+                newSelectedMassageType = selectedRadioButton.getText().toString();
+            } else {
+                Log.e(TAG, "HIBA: A kiválasztott RadioButton (ID: " + selectedRadioButtonId + ") null!");
+                Toast.makeText(this, "Hiba a kiválasztott típus olvasásakor.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String newSelectedMassageTypeFromSpinner = spinnerNewMassageType.getSelectedItem().toString();
+        } else {
+            Toast.makeText(this, "Kérjük, válasszon egy masszázs típust!", Toast.LENGTH_SHORT).show();
+            return; // Nincs kiválasztott elem
+        }
 
-            if (newSelectedMassageTypeFromSpinner.equals(receivedCurrentMassageType)) {
-                Toast.makeText(EditAppointmentActivity.this, "Nem történt változás a masszázs típusában.", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        if (TextUtils.isEmpty(newSelectedMassageType)) { // Ez az ág valószínűleg már nem szükséges az előző ellenőrzés miatt
+            Toast.makeText(this, "Kérjük, válasszon egy masszázs típust!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-            // Logoljuk a FirebaseHelper hívás előtti paramétereket NAGYON ALAPOSAN
-            Log.i(TAG, "FirebaseHelper.modifyAppointmentMassageType hívása a következő paraméterekkel fog történni:");
-            Log.i(TAG, "  AppointmentId (az 'appointments' dokumentum ID-ja): " + receivedAppointmentId);
-            Log.i(TAG, "  TimeSlotId (a 'time_slots' dokumentum ID-ja): " + receivedTimeSlotId); // ENNEK KELL lennie pl. "YYYY-MM-DD_HHMM"
-            Log.i(TAG, "  NewMassageType (az új típus a spinnerből): " + newSelectedMassageTypeFromSpinner); // ENNEK KELL lennie pl. "Svéd masszázs"
+        if (newSelectedMassageType.equals(currentMassageType)) {
+            Toast.makeText(this, "Nem történt változás a masszázs típusában.", Toast.LENGTH_SHORT).show();
+            // Opcionálisan itt is visszatérhetsz az előző Activity-re, ha ez a kívánt viselkedés.
+            // finish();
+            return;
+        }
 
-            progressBarEdit.setVisibility(View.VISIBLE);
-            btnSaveChanges.setEnabled(false);
+        Log.i(TAG, "Változtatások mentése: AppointmentID=" + appointmentId + ", TimeSlotID=" + timeSlotId +
+                ", Új Típus=" + newSelectedMassageType);
+        if (progressBarEdit != null) progressBarEdit.setVisibility(View.VISIBLE);
+        if (btnSaveChanges != null) btnSaveChanges.setEnabled(false);
 
-            firebaseHelper.modifyAppointmentMassageType(
-                    receivedAppointmentId,          // Az 'appointments' dokumentum ID-ja
-                    receivedTimeSlotId,             // A 'time_slots' dokumentum ID-ja (pl. "2025-05-19_0800")
-                    newSelectedMassageTypeFromSpinner, // Az új masszázs típus a Spinnerből
-                    new FirebaseHelper.OnOperationCompleteListener() {
-                        @Override
-                        public void onSuccess() {
-                            progressBarEdit.setVisibility(View.GONE);
-                            btnSaveChanges.setEnabled(true);
-                            Toast.makeText(EditAppointmentActivity.this, "Masszázs típusa sikeresen módosítva.", Toast.LENGTH_LONG).show();
-                            Log.d(TAG, "Módosítás sikeres. Visszatérés az előző Activity-re RESULT_OK-val.");
-                            setResult(RESULT_OK);
-                            finish();
-                        }
-
-                        @Override
-                        public void onFailure(Exception e) {
-                            progressBarEdit.setVisibility(View.GONE);
-                            btnSaveChanges.setEnabled(true);
-                            Toast.makeText(EditAppointmentActivity.this, "Hiba a módosítás során: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            Log.e(TAG, "Hiba a masszázs típus módosításakor FirebaseHelper callback-ben: ", e);
-                        }
+        firebaseHelper.modifyAppointmentMassageType(appointmentId, timeSlotId, newSelectedMassageType,
+                new FirebaseHelper.OnOperationCompleteListener() {
+                    @Override
+                    public void onSuccess() {
+                        if (progressBarEdit != null) progressBarEdit.setVisibility(View.GONE);
+                        if (btnSaveChanges != null) btnSaveChanges.setEnabled(true);
+                        Log.i(TAG, "Masszázs típus sikeresen módosítva.");
+                        Toast.makeText(EditAppointmentActivity.this, "Masszázs típus sikeresen módosítva!", Toast.LENGTH_SHORT).show();
+                        Intent resultIntent = new Intent();
+                        setResult(Activity.RESULT_OK, resultIntent);
+                        finish();
                     }
-            );
-        });
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (progressBarEdit != null) progressBarEdit.setVisibility(View.GONE);
+                        if (btnSaveChanges != null) btnSaveChanges.setEnabled(true);
+                        Log.e(TAG, "Hiba a masszázs típus módosításakor.", e);
+                        Toast.makeText(EditAppointmentActivity.this, "Hiba a mentés során: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(TAG, "onStart");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop");
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

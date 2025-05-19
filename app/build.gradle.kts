@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.firebase.firestore)
+    implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
